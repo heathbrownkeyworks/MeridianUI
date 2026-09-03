@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meridian NIF Survey</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="survey" aria-label="Meridian NIF camera controls">
+        <header class="survey__header">
+            <div>
+                <p class="eyebrow">MERIDIAN.NIFSCENE / 4</p>
+                <h1>Object survey</h1>
+            </div>
+            <div class="header-actions">
+                <output id="cameraReadout" class="readout" aria-live="off">Y 035° · P +15° · Z 1.00</output>
+                <button id="closeTest" class="close-button" type="button" aria-label="Close NIF test" title="Close test (Escape)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <form id="modelLoader" class="model-loader" aria-label="NIF model selector">
+            <div class="model-presets" aria-label="Verified vanilla model presets">
+                <button type="button" data-armor-outfit-preset>RECORD OUTFIT</button>
+                <button type="button" data-modded-armor-outfit-preset>MODDED RECORD</button>
+                <button type="button" data-layered-armor-preset>LAYERED RECORD</button>
+                <button type="button" data-texture-swap-preset>TEXTURE SWAP</button>
+                <button type="button" data-player-outfit-preset>PLAYER OUTFIT</button>
+                <button type="button" data-player-actor-preset>PLAYER ACTOR</button>
+                <button type="button" data-outfit-preset>NIF OUTFIT</button>
+                <button type="button" data-model-path="armor\hide\f\cuirasslight_1.nif">SKINNED ARMOR</button>
+                <button type="button" data-model-path="clutter\coin01.nif">STATIC COIN</button>
+            </div>
+            <label for="modelPath">MESHES\</label>
+            <input id="modelPath" name="modelPath" type="text" value="armor\hide\f\cuirasslight_1.nif" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button class="load-button" type="submit">LOAD</button>
+            <output id="modelStatus" class="model-status" aria-live="polite">ARMOR-RECORD HIDE OUTFIT</output>
+        </form>
+
+        <section class="lighting-strip" aria-label="Studio lighting controls">
+            <div class="lighting-title">
+                <span>STUDIO LIGHT</span>
+                <output id="lightingMode" aria-live="polite">NEUTRAL</output>
+            </div>
+            <div class="lighting-presets" role="group" aria-label="Lighting preset">
+                <button type="button" data-lighting-preset="0" aria-pressed="true">NEUTRAL</button>
+                <button type="button" data-lighting-preset="1" aria-pressed="false">BRIGHT</button>
+                <button type="button" data-lighting-preset="2" aria-pressed="false">DRAMATIC</button>
+            </div>
+            <label for="exposure">EXPOSURE</label>
+            <input id="exposure" type="range" min="-2" max="2" step="0.1" value="0">
+            <output id="exposureReadout" for="exposure">+0.0 EV</output>
+            <button id="resetLighting" class="lighting-reset" type="button">RESET</button>
+        </section>
+
+        <section class="outfit-manifest" aria-label="Outfit piece visibility">
+            <div class="outfit-title">
+                <span>OUTFIT MANIFEST</span>
+                <output id="outfitReadout" aria-live="polite">4 / 4 VISIBLE</output>
+            </div>
+            <div class="outfit-slots" role="group" aria-label="Visible hide outfit pieces">
+                <button type="button" data-outfit-object="101" aria-pressed="true"><i></i><span>CUIRASS</span></button>
+                <button type="button" data-outfit-object="102" aria-pressed="true"><i></i><span>HELMET</span></button>
+                <button type="button" data-outfit-object="103" aria-pressed="true"><i></i><span>GLOVES</span></button>
+                <button type="button" data-outfit-object="104" aria-pressed="true"><i></i><span>BOOTS</span></button>
+            </div>
+        </section>
+
+        <section class="weight-strip" aria-label="Body weight calibration">
+            <div class="weight-title">
+                <span>BODY WEIGHT</span>
+                <output id="weightReadout" aria-live="polite">100 / HEAVY</output>
+            </div>
+            <div class="weight-scale" role="group" aria-label="Skyrim body weight">
+                <button type="button" data-outfit-weight="0" aria-pressed="false"><b>0</b><span>LEAN</span></button>
+                <button type="button" data-outfit-weight="50" aria-pressed="false"><b>50</b><span>MID</span></button>
+                <button type="button" data-outfit-weight="100" aria-pressed="true"><b>100</b><span>HEAVY</span></button>
+            </div>
+        </section>
+
+        <div class="workbench">
+            <aside class="rail rail--left" aria-label="Pan controls">
+                <span class="rail__label">PAN</span>
+                <button class="control" type="button" data-action="panUp" aria-label="Pan up" title="Hold: pan up (Shift+W or Shift+Up)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg><span>UP</span>
+                </button>
+                <div class="control-pair">
+                    <button class="control" type="button" data-action="panLeft" aria-label="Pan left" title="Hold: pan left (Shift+A or Shift+Left)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg><span>LEFT</span>
+                    </button>
+                    <button class="control" type="button" data-action="panRight" aria-label="Pan right" title="Hold: pan right (Shift+D or Shift+Right)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg><span>RIGHT</span>
+                    </button>
+                </div>
+                <button class="control" type="button" data-action="panDown" aria-label="Pan down" title="Hold: pan down (Shift+S or Shift+Down)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m6-6-6 6-6-6"/></svg><span>DOWN</span>
+                </button>
+            </aside>
+
+            <section id="previewViewport" class="viewport" aria-label="Native NIF preview">
+                <span class="corner corner--tl" aria-hidden="true"></span>
+                <span class="corner corner--tr" aria-hidden="true"></span>
+                <span class="corner corner--bl" aria-hidden="true"></span>
+                <span class="corner corner--br" aria-hidden="true"></span>
+                <div class="axis" aria-hidden="true"><i class="axis__z"></i><i class="axis__x"></i><b>Z</b><em>X</em></div>
+                <p class="viewport__hint">HOLD A CONTROL OR KEY</p>
+            </section>
+
+            <aside class="rail rail--right" aria-label="Tilt and zoom controls">
+                <span class="rail__label">TILT</span>
+                <button class="control" type="button" data-action="pitchUp" aria-label="Tilt up" title="Hold: tilt up (W or Up)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15 12 8l7 7"/></svg><span>UP</span>
+                </button>
+                <button class="control" type="button" data-action="pitchDown" aria-label="Tilt down" title="Hold: tilt down (S or Down)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg><span>DOWN</span>
+                </button>
+                <span class="rail__label rail__label--spaced">ZOOM</span>
+                <button class="control" type="button" data-action="zoomIn" aria-label="Zoom in" title="Hold: zoom in (E or +)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M10 7v6M7 10h6"/></svg><span>IN</span>
+                </button>
+                <button class="control" type="button" data-action="zoomOut" aria-label="Zoom out" title="Hold: zoom out (Q or -)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M7 10h6"/></svg><span>OUT</span>
+                </button>
+            </aside>
+        </div>
+
+        <footer class="orbit-bar">
+            <button class="control control--wide" type="button" data-action="orbitLeft" aria-label="Orbit left" title="Hold: orbit left (A or Left)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8H3v-4M3 8a9 9 0 1 1-1 7"/></svg><span>ORBIT LEFT</span>
+            </button>
+            <button id="frameModel" class="frame-button" type="button" title="Frame model (F)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+                <span>FRAME</span>
+            </button>
+            <button class="control control--wide" type="button" data-action="orbitRight" aria-label="Orbit right" title="Hold: orbit right (D or Right)">
+                <span>ORBIT RIGHT</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h4v-4m0 4a9 9 0 1 0 1 7"/></svg>
+            </button>
+        </footer>
+
+        <p class="keyline">A/D OR ←/→ ORBIT · W/S OR ↑/↓ TILT · Q/E OR −/+ ZOOM · HOLD SHIFT TO PAN · F FRAME · ESC CLOSE</p>
+    </main>
+
+    <script src="camera-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser</title>
+</head>
+
+<body>
+    <div id="meridian-anim" style="position:fixed;bottom:12px;left:12px;width:64px;height:64px;background:conic-gradient(#4aa3b8,#1b4a56,#4aa3b8);border-radius:50%;animation:meridian-spin 1s linear infinite;"></div>
+    <style>@keyframes meridian-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+    <select id="meridian-dropdown-check" style="position:fixed;top:8px;right:8px;font-size:18px;">
+        <option>Dropdown renders</option>
+        <option>Second option</option>
+        <option>Third option</option>
+    </select>
+  <h1>
+    Test case for Skyrim CEF
+  </h1>
+	<div id="div1" style="color: green">
+	<p id="p1">This is a paragraph.</p>
+	<p id="p2">This is another paragraph.</p>
+	</div>
+  <script>
+	setInterval(() => {
+		if (NL.func1)
+		{
+			//window.func(console);
+			NL.func1(1, 2.33, "str", [1, 2, 3], { "k1": 1, "k2": 2.3451, "k3": "str3", "k4": [12, 13, 14], "k5": null });
+			//window.func2(33);
+		
+			const para = document.createElement("p");
+			const node = document.createTextNode("This is NEW paragraph.");
+			//const node = document.createTextNode(window.func1);
+			para.appendChild(node);
+
+			const element = document.getElementById("div1");
+			element.appendChild(para);
+		}
+	}, 1000);
+	
+	NL.addEventListener("on:message", (data) => {
+		const para = document.createElement("p");
+		const node = document.createTextNode(data);
+		para.appendChild(node);
+
+		const element = document.getElementById("div1");
+		element.appendChild(para);
+	});
+  </script>
+
+  <div id="promisePanel" style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.6); color:#9f9; padding:6px; font:12px monospace;">
+    <button onclick="runP('fast')">P:fast</button>
+    <button onclick="runP('slow')">P:slow</button>
+    <button onclick="runP('fail')">P:fail</button>
+    <div id="promiseOut">promise results…</div>
+  </div>
+  <script>
+    async function runP(kind) {
+      const out = document.getElementById('promiseOut');
+      const t0 = performance.now();
+      try {
+        const fn = { fast: window.meridianTest.echoFast, slow: window.meridianTest.echoSlow, fail: window.meridianTest.alwaysReject }[kind];
+        const result = await fn('hello', 42);
+        out.textContent = kind + ' OK (' + Math.round(performance.now() - t0) + 'ms): ' + JSON.stringify(result);
+      } catch (e) {
+        out.textContent = kind + ' REJECTED (' + Math.round(performance.now() - t0) + 'ms): ' + e.message;
+      }
+    }
+  </script>
+</body>
+
+</html>

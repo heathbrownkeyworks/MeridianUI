@@ -1,0 +1,33 @@
+; MeridianUI configuration template.
+; Rename this file to MeridianUI.ini (drop the .disabled suffix) to activate.
+; Location: Data\SKSE\Plugins\MeridianUI.ini
+; Any value set here OVERRIDES what consumer plugins pass in Settings
+; (INI wins). Every entry is optional; commented entries keep defaults.
+
+[General]
+; Renderer for browser surfaces: RingBuffer (default) or SyncCopy.
+;RendererType=RingBuffer
+
+; Allow language switching in native game menus (console, race menu, ...).
+; Default: true
+;NativeMenuLangSwitching=true
+
+; Development-only escape hatch for browsers that intentionally load ordinary
+; HTTP/HTTPS pages without native bindings. The secure release default is false,
+; which restricts all browsers to one pinned mod:// host.
+;AllowRemoteContent=false
+
+[Debug]
+; Master switch for the CEF remote debugger. Setting false forces the port
+; off and takes precedence over RemoteDebuggingPort below.
+; Default: false. Enable only for local development.
+;RemoteDebuggingEnabled=false
+
+; Remote debugger port (http://localhost:<port>). Valid range 1024-65535;
+; 0 disables. Default: 0. Set RemoteDebuggingEnabled=true and choose a port
+; explicitly for local development.
+;RemoteDebuggingPort=9009
+
+; MeridianUI log verbosity: trace, debug, info, warn, error.
+; Default: info
+;LogLevel=info

@@ -1,0 +1,7 @@
+FormKey: 000801:MeridianNifTest.esp
+EditorID: MeridianNifTestGoldTexture
+Diffuse: clutter\Coin01.dds
+NormalOrGloss: clutter\Coin01_n.dds
+EnvironmentMaskOrSubsurfaceTint: Gray.dds
+Environment: cubemaps\Bronze_e.dds
+Flags: []

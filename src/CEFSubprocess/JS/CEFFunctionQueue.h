@@ -1,0 +1,26 @@
+#pragma once
+
+#include "PCH.h"
+
+namespace Meridian::JS
+{
+    class CEFFunctionQueue
+    {
+      public:
+        struct Item
+        {
+            CefString objectName = "";
+            CefString functionName = "";
+        };
+
+      protected:
+        std::mutex m_syncMutex;
+        std::deque<std::shared_ptr<Item>> m_funcDeque;
+
+      public:
+        void AddFunction(const CefString& a_objectName, const CefString& a_functionName);
+        void Clear();
+        std::shared_ptr<Item> PopNext();
+        size_t GetSize();
+    };
+}

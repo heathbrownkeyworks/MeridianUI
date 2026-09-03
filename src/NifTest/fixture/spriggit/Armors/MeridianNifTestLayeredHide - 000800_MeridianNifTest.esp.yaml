@@ -1,0 +1,17 @@
+FormKey: 000800:MeridianNifTest.esp
+EditorID: MeridianNifTestLayeredHide
+Name:
+  TargetLanguage: English
+  Value: Meridian Layered Hide Test
+BodyTemplate:
+  FirstPersonFlags:
+  - Body
+  - Hands
+  ArmorType: LightArmor
+Race: 000019:Skyrim.esm
+Armature:
+- 01B397:Skyrim.esm
+- 01B39B:Skyrim.esm
+Value: 0
+Weight: 0
+ArmorRating: 0

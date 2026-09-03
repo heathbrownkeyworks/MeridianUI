@@ -1,0 +1,23 @@
+FormKey: 000802:MeridianNifTest.esp
+EditorID: MeridianNifTestGoldCuirassAA
+BodyTemplate:
+  FirstPersonFlags:
+  - Body
+  - Forearms
+  - Calves
+  ArmorType: LightArmor
+  ActsLike44: True
+Race: 000019:Skyrim.esm
+Priority:
+  Female: 5
+WeightSliderEnabled:
+  Female: True
+Unknown2: 23
+WorldModel:
+  Female:
+    File: Armor\Hide\F\CuirassLight_1.nif
+    AlternateTextures:
+    - Name: _CuirassLight_1
+      NewTexture: 000801:MeridianNifTest.esp
+AdditionalRaces:
+- 013746:Skyrim.esm

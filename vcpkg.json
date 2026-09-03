@@ -1,0 +1,24 @@
+{
+  "name": "meridian-ui",
+  "version-semver": "1.2.0",
+  "description": "UI platform for Skyrim, including CEF (Chromium Embedded Framework) integration and more",
+  "homepage": "https://github.com/heathbrownkeyworks/MeridianUI",
+  "license": "MIT",
+  "supports": "windows & x64",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    "cef-prebuilt",
+    {
+      "name": "directxtk",
+      "platform": "windows"
+    },
+    "palsigslot",
+    "spdlog",
+    "commonlibsse-ng",
+    "nlohmann-json",
+    "simpleini"
+  ]
+}

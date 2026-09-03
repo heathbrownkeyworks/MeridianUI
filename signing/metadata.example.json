@@ -1,0 +1,6 @@
+{
+  "Endpoint": "https://<region>.codesigning.azure.net",
+  "CodeSigningAccountName": "<account-name>",
+  "CertificateProfileName": "<certificate-profile-name>",
+  "ExcludeCredentials": []
+}

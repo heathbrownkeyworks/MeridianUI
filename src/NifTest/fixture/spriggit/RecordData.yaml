@@ -1,0 +1,15 @@
+SpriggitSource:
+  PackageName: Spriggit.Yaml.Skyrim
+  Version: 0.40
+ModKey: MeridianNifTest.esp
+GameRelease: SkyrimSE
+ModHeader:
+  Flags:
+  - Small
+  Stats:
+    Version: 1.7
+  Author: ColdSun
+  Description: Deterministic layered-ARMA and alternate-texture fixtures for Meridian NIF Test.
+  MasterReferences:
+  - Master: Skyrim.esm
+    FileSize: 0

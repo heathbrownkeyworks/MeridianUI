@@ -1,0 +1,17 @@
+FormKey: 000803:MeridianNifTest.esp
+EditorID: MeridianNifTestGoldCuirass
+Name:
+  TargetLanguage: English
+  Value: Meridian Gold Texture Test
+BodyTemplate:
+  FirstPersonFlags:
+  - Body
+  - Forearms
+  - Calves
+  ArmorType: LightArmor
+Race: 000019:Skyrim.esm
+Armature:
+- 000802:MeridianNifTest.esp
+Value: 0
+Weight: 0
+ArmorRating: 0
