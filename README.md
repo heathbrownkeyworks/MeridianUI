@@ -10,24 +10,38 @@ The current source version is 1.2.0. The public `IUIPlatformAPI` version 1.0, `M
 
 | Runtime | Status |
 | --- | --- |
-| Skyrim AE 1.6.1170 | In-game validation passed |
+| Skyrim AE 1.6.1170 | In-game validation passed, including SkyrimUpscaler Build 14 with DLSS Neural Reconstruction |
 | Skyrim AE 1.7.104 | Builds against CommonLibSSE-NG 7 and resolves all required Address Library IDs; in-game validation is pending |
-| Skyrim SE 1.5.97 | Supported by the build configuration; current in-game regression test is pending |
+| Skyrim SE 1.5.97 | Tailor RingBuffer stability passed; the broader cross-feature regression is pending |
 | Skyrim VR | Not supported |
 
-DLSS 5 compatibility is not included in the current release scope.
+SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing described below. Meridian's default presentation order remains unchanged for users who do not need this compatibility mode.
+
+## What's new in 1.2.0
+
+- Added an opt-in compositor path for SkyrimUpscaler Build 14 and DLSS Neural Reconstruction.
+- Fixed retained RingBuffer surfaces that could flicker or update only while the mouse was moving on Skyrim SE.
+- Added a post-plugin-load input guard so focused browser keystrokes are delivered once and hidden from competing direct input hooks.
+- Added balanced Chromium key releases during focus changes, Alt-Tab, browser closure, and shutdown.
+- Updated the native plugins to CommonLibSSE-NG 7.0.0 with Address Library format-5 metadata for Skyrim 1.7.99 and newer layouts.
+- Added instruction validation before Meridian installs runtime-sensitive Present, shutdown, and native-language hooks.
+- Kept the public browser, View, and native rendering API versions stable.
 
 ## Features
 
 - Off-screen Chromium rendering integrated with Skyrim's Direct3D 11 presentation path
+- Triple-buffered shared-texture RingBuffer transport with automatic SyncCopy fallback
 - Multiple independent browser views
-- Shared keyboard, mouse, cursor, focus, pause, and text-entry ownership
+- Shared keyboard, mouse, cursor, focus, pause, and text-entry ownership across consumer mods
+- Focused input isolation that prevents duplicate delivery and interference from competing hooks
 - Automatic restoration of the player's movement mode when a focused interface closes
 - JavaScript-to-C++ functions, C++-to-JavaScript events, and asynchronous promise bindings
+- Native compositor layers and rigid, skinned, weighted, armor-aware, and live-reference NIF preview APIs
+- Opt-in SkyrimUpscaler Build 14 and DLSS Neural Reconstruction compatibility
 - Secure `mod://` resource loading with host pinning and path traversal protection
 - Browser cleanup and CEF subprocess shutdown during normal game exit
 - Runtime validation before instruction-level Skyrim hooks are installed
-- SE and AE runtime detection through CommonLibSSE-NG and Address Library
+- SE and AE runtime detection through CommonLibSSE-NG 7 and Address Library
 
 ## Public APIs
 
@@ -73,6 +87,21 @@ Data/
 ```
 
 Do not copy source files or build directories into the game. When using Mod Organizer 2, install the release as its own mod and launch Skyrim through MO2.
+
+## DLSS 5 compatibility
+
+Meridian 1.2.0 was validated on Skyrim AE 1.6.1170 with SkyrimUpscaler Build 14, DLSS, and DLSS Neural Reconstruction enabled. This configuration needs Meridian to composite into Skyrim's bound game render target before the renderer-end call.
+
+Rename `Data\SKSE\Plugins\MeridianUI.ini.disabled` to `MeridianUI.ini`, then enable the compatibility timing:
+
+```ini
+[Compatibility]
+CompositorTiming=BeforeRendererEnd
+```
+
+Leave this setting at its default `AfterRendererEnd` value when SkyrimUpscaler Build 14 compatibility is not required. The setting changes Meridian's internal presentation order and does not change any consumer API.
+
+See the [DLSS 5 runtime gate](docs/testing/MERIDIAN_DLSS5_RUNTIME_GATE.md) for the validated environment, expected log evidence, and remaining regression checks.
 
 ## Integrating an SKSE plugin
 
@@ -156,7 +185,7 @@ The release pipeline preserves valid vendor signatures, appends the maintainer s
 
 ## Testing and issue reports
 
-Automated tests cover API validation, browser security, focus ownership, input handling, frame transport, process shutdown, NIF scene behavior, and release packaging. Runtime checklists are maintained in [`docs/testing`](docs/testing).
+The current 1.2.0 candidate passes all 48 automated tests. They cover API validation, browser security, focus ownership, input handling, frame transport, process shutdown, NIF scene behavior, runtime call-site validation, and release packaging. Runtime checklists are maintained in [`docs/testing`](docs/testing).
 
 When reporting a problem, include:
 
