@@ -16,6 +16,9 @@ file(MAKE_DIRECTORY "${ROOT}/SDK/MeridianUIAPI" "${ROOT}/docs/testing" "${ROOT}/
 file(COPY_FILE "${PROJECT_ROOT}/README.md" "${ROOT}/README.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/CHANGELOG.md" "${ROOT}/CHANGELOG.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/LICENSE" "${ROOT}/LICENSE" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${PROJECT_ROOT}/EXCEPTIONS.md" "${ROOT}/EXCEPTIONS.md" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${PROJECT_ROOT}/LICENSING.md" "${ROOT}/LICENSING.md" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${PROJECT_ROOT}/LICENSES/MIT.txt" "${ROOT}/licenses/meridianui-api-and-nirnlab-mit.txt" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/THIRD_PARTY_NOTICES.md" "${ROOT}/THIRD_PARTY_NOTICES.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/MeridianUI-AuthorGuide.md" "${ROOT}/docs/MeridianUI-AuthorGuide.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/MeridianView-AuthorGuide.md" "${ROOT}/docs/MeridianView-AuthorGuide.md" ONLY_IF_DIFFERENT)
@@ -32,6 +35,7 @@ foreach(header IN LISTS api_headers)
     file(COPY_FILE "${header}" "${ROOT}/SDK/MeridianUIAPI/${header_name}" ONLY_IF_DIFFERENT)
 endforeach()
 file(COPY_FILE "${GENERATED_VERSION}" "${ROOT}/SDK/MeridianUIAPI/Version.h" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${API_SOURCE}/LICENSE-MIT" "${ROOT}/SDK/MeridianUIAPI/LICENSE-MIT" ONLY_IF_DIFFERENT)
 
 set(packages
     cef-prebuilt

@@ -216,6 +216,13 @@ Meridian UI is derived from NirnLabUIPlatform by [kkEngine](https://github.com/k
 
 ## License
 
-Meridian's original source changes are provided under the [MIT License](LICENSE), with the original NirnLabUIPlatform attribution retained.
+Meridian UI's native implementation and distributed binaries are licensed as
+GPL-3.0-or-later with the Modding Exception and GPL-3.0 Linking Exception in
+[EXCEPTIONS.md](EXCEPTIONS.md). This is required because the native plugins
+statically link CommonLibSSE-NG.
 
-Distributed native binaries also contain statically linked CommonLibSSE-NG code under GPL-3.0-or-later with its modding and linking exceptions. Applicable license texts and the corresponding-source notice are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and staged with release packages.
+The standalone public API headers remain available under the MIT License, and
+the original NirnLabUIPlatform MIT attribution is retained. The exact boundary,
+corresponding-source information, and third-party terms are documented in
+[LICENSING.md](LICENSING.md) and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

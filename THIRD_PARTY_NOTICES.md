@@ -19,8 +19,10 @@ adjacent `licenses` directory of the release.
 - toml11
 - Xbyak
 
-Meridian UI is derived from NirnLabUIPlatform by kkEngine. Its attribution and
-the Meridian UI MIT terms are retained in `LICENSE` and `README.md`.
+Meridian UI is derived from NirnLabUIPlatform by kkEngine. Its MIT attribution
+is retained in `LICENSES/MIT.txt`. Meridian's independently reusable public API
+headers are also available under that MIT grant. Meridian's native
+implementation and binaries are licensed as described in `LICENSING.md`.
 
 Meridian's native DLLs statically link CommonLibSSE-NG. Corresponding source
 for the exact CommonLib revision is available from

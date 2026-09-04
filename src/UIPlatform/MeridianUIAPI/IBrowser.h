@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #define JS_EXECUTE_SCRIPT_URL "Skyrim"

@@ -24,6 +24,8 @@ endforeach()
 
 set(required_release_files
     "${ROOT}/MeridianUI/LICENSE"
+    "${ROOT}/MeridianUI/EXCEPTIONS.md"
+    "${ROOT}/MeridianUI/LICENSING.md"
     "${ROOT}/MeridianUI/CHANGELOG.md"
     "${ROOT}/MeridianUI/README.md"
     "${ROOT}/MeridianUI/THIRD_PARTY_NOTICES.md"
@@ -32,6 +34,7 @@ set(required_release_files
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/RenderLayerAPI.h"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/NifViewAPI.h"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/NifSceneAPI.h"
+    "${ROOT}/MeridianUI/SDK/MeridianUIAPI/LICENSE-MIT"
     "${ROOT}/MeridianUI/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/AE_1.7.104_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md"
@@ -39,6 +42,7 @@ set(required_release_files
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/licenses/cef-prebuilt.txt"
     "${ROOT}/MeridianUI/licenses/commonlibsse-ng.txt"
+    "${ROOT}/MeridianUI/licenses/meridianui-api-and-nirnlab-mit.txt"
     "${ROOT}/MeridianUI/licenses/toml11.txt"
 )
 foreach(required_file IN LISTS required_release_files)
