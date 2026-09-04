@@ -645,6 +645,11 @@ When an override is applied, the log names the keys: `MeridianUI.ini overrode: .
 ; Default: false
 ;AllowRemoteContent=false
 
+[Compatibility]
+; Presentation order: AfterRendererEnd (default) or BeforeRendererEnd.
+; Use BeforeRendererEnd for SkyrimUpscaler Build 14 / DLSS 5 testing.
+;CompositorTiming=AfterRendererEnd
+
 [Debug]
 ; Master switch for the CEF remote debugger. Setting false forces the port
 ; off and takes precedence over RemoteDebuggingPort below.
@@ -664,6 +669,12 @@ Key notes:
 
 * `RendererType` accepts only `RingBuffer` and `SyncCopy` (case-insensitive).
   `DeferredContext` is not accepted here by design.
+* `CompositorTiming` is internal to Meridian and does not change the consumer API.
+  `AfterRendererEnd` preserves the normal always-on-top compositor path.
+  `BeforeRendererEnd` draws into the game-owned frame before SkyrimUpscaler Build 14
+  consumes or replaces that target for DLSS Neural Reconstruction. Use it only as a
+  compatibility override; it may allow later game or post-processing work to affect
+  Meridian surfaces.
 * Booleans accept `1`/`0`, `true`/`false`, `yes`/`no`, case-insensitively.
 * `RemoteDebuggingEnabled=false` forces the port off regardless of
   `RemoteDebuggingPort`.
@@ -679,6 +690,11 @@ When debugging your own UI, set `RemoteDebuggingEnabled=true`, choose a port suc
 `9009`, and use `LogLevel=debug`. Disable the debugger again for normal play and
 release packaging. MeridianUI logs to `MeridianUI.log` in the standard SKSE log directory;
 the CEF child process logs alongside it as `MeridianCEFSubprocess.exe.log`.
+At startup the Present hook logs its resolved `compositor timing`. On the first
+drawable frame, and again after a target replacement or format/size change,
+`RenderHost` logs the swap-chain and backbuffer identities, dimensions, format, and
+whether the backbuffer belongs to Meridian's render device. These fields are intended
+to diagnose proxy-swap-chain compatibility without guessing from a blank overlay.
 
 ---
 

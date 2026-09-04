@@ -665,6 +665,30 @@ if(BUILD_TESTING)
     add_test(NAME InputChordTests COMMAND InputChordTests)
 
     add_executable(
+        InputSinkPriorityTests
+            tests/UIPlatform/InputSinkPriorityTests.cpp
+    )
+    target_include_directories(
+        InputSinkPriorityTests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
+    )
+    set_compile_options(InputSinkPriorityTests)
+    add_test(NAME InputSinkPriorityTests COMMAND InputSinkPriorityTests)
+
+    add_executable(
+        PressedKeyStateTests
+            tests/UIPlatform/PressedKeyStateTests.cpp
+    )
+    target_include_directories(
+        PressedKeyStateTests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
+    )
+    set_compile_options(PressedKeyStateTests)
+    add_test(NAME PressedKeyStateTests COMMAND PressedKeyStateTests)
+
+    add_executable(
         CallSiteValidationTests
             tests/UIPlatform/CallSiteValidationTests.cpp
     )
@@ -1157,6 +1181,9 @@ if(BUILD_AS_SHARED)
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/MeridianView-AuthorGuide.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/AE_1.7.104_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_SE_RINGBUFFER_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_DLSS5_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md
             ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h

@@ -1,4 +1,5 @@
 #include "PCH.h"
+#include "Hooks/InputDispatchHook.h"
 #include "Hooks/ShutdownHook.hpp"
 #include "Hooks/PresentHook.h"
 #include "Menus/CursorMenuHooks.h"
@@ -107,7 +108,10 @@ extern "C"
 
             // Hooks
             Meridian::Hooks::WinProcHook::Install();
-            Meridian::Hooks::PresentHook::Install();  // failures are logged and gated in UIPlatformService::Init
+            Meridian::Hooks::InputDispatchHook::Install();  // early layer preserves the original sink contract
+            Meridian::Hooks::InputDispatchHook::RegisterOutermostInstall();  // final layer runs ahead of competing plugin hooks
+            Meridian::Hooks::PresentHook::Install(
+                ini.compositorTiming.value_or(Meridian::Config::CompositorTiming::AfterRendererEnd));  // failures are logged and gated in UIPlatformService::Init
             Meridian::Menus::CursorMenuEx::Install();
             Meridian::Hooks::ShutdownHook::Install();
 

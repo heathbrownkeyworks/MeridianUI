@@ -17,6 +17,14 @@
 ; which restricts all browsers to one pinned mod:// host.
 ;AllowRemoteContent=false
 
+[Compatibility]
+; Controls when Meridian composites its surfaces around Skyrim's renderer-end
+; call. AfterRendererEnd is the shipping default. SkyrimUpscaler Build 14 with
+; DLSS Neural Reconstruction may replace or consume the game backbuffer during
+; that call; use BeforeRendererEnd for the DLSS 5 compatibility path.
+; Default: AfterRendererEnd
+;CompositorTiming=AfterRendererEnd
+
 [Debug]
 ; Master switch for the CEF remote debugger. Setting false forces the port
 ; off and takes precedence over RemoteDebuggingPort below.

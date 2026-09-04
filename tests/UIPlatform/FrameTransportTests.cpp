@@ -1,6 +1,7 @@
 #define NOMINMAX
 #include <windows.h>
 
+#include "Render/FrameConsumerSync.h"
 #include "Render/RenderDevice.h"
 #include "Render/FrameTransport.h"
 
@@ -114,6 +115,19 @@ namespace
         Expect(platform.Device() != nullptr && platform.Context() != nullptr, "device and context are non-null");
     }
 
+    void TestConsumerAcquirePlan()
+    {
+        const auto newFrame = Meridian::Render::PlanConsumerAcquire(true);
+        Expect(newFrame.acquireKey == 1, "newly published frame is acquired with key 1");
+        Expect(newFrame.clearsAwaitingGameAcquire,
+               "newly published frame clears the producer-to-consumer handoff flag");
+
+        const auto retainedFrame = Meridian::Render::PlanConsumerAcquire(false);
+        Expect(retainedFrame.acquireKey == 0, "retained frame is reacquired with key 0");
+        Expect(!retainedFrame.clearsAwaitingGameAcquire,
+               "retained frame leaves the producer-to-consumer handoff flag clear");
+    }
+
     void TestRoundTrip(ID3D11Device* a_gameDevice)
     {
         Meridian::Render::RenderDevice platform;
@@ -216,6 +230,30 @@ namespace
         transport.ReleaseConsumedFrame();
     }
 
+    void TestRetainedFrameCanBeConsumedRepeatedly(ID3D11Device* a_gameDevice)
+    {
+        Meridian::Render::RenderDevice platform;
+        platform.Create(a_gameDevice);
+        Meridian::Render::FrameTransport transport;
+        transport.Initialize(platform, a_gameDevice, 24, 24);
+
+        constexpr std::uint32_t kColor = 0xFF4269A5;
+        const auto source = MakeSourceTexture(platform, 24, 24, kColor);
+        Expect(transport.ProduceFrame(source.Get()), "retained-frame source is produced once");
+
+        for (int present = 0; present < 8; ++present)
+        {
+            const auto srv = transport.ConsumeSRV();
+            Expect(srv != nullptr, "retained frame remains consumable on every present");
+            if (srv != nullptr)
+            {
+                Expect(ReadFirstPixelOnGameDevice(a_gameDevice, srv.Get()) == kColor,
+                       "retained frame preserves its pixels across repeated presents");
+            }
+            transport.ReleaseConsumedFrame();
+        }
+    }
+
     void TestConcurrentDimensionAccess(ID3D11Device* a_gameDevice)
     {
         Meridian::Render::RenderDevice platform;
@@ -251,10 +289,12 @@ int main()
     }
 
     TestDeviceCreation(gameDevice.Get());
+    TestConsumerAcquirePlan();
     TestRoundTrip(gameDevice.Get());
     TestSlotRotationAndFreshness(gameDevice.Get());
     TestResizeRebuild(gameDevice.Get());
     TestProducerReclaimsSkippedFrames(gameDevice.Get());
+    TestRetainedFrameCanBeConsumedRepeatedly(gameDevice.Get());
     TestConcurrentDimensionAccess(gameDevice.Get());
 
     if (g_failureCount != 0)

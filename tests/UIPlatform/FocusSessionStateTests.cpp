@@ -29,6 +29,8 @@ int main()
     Expect(state.ConsumeOpeningKeyRelease(0x2A), "opening modifier release is consumed once");
     Expect(!state.ConsumeOpeningKeyRelease(0x2A), "opening modifier release is not consumed twice");
     state.End();
+    Expect(!state.IsOpeningKeyHeld(0x2A), "focus loss clears opening modifier state");
+    Expect(!state.ConsumeOpeningKeyRelease(0x2A), "focus loss cannot leak a stale opening key-up rule");
 
     const auto firstRestore = state.TakePendingRestore();
     Expect(firstRestore.has_value() && firstRestore->generation == firstGeneration,

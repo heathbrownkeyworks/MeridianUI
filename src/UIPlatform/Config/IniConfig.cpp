@@ -83,6 +83,18 @@ namespace
 
 namespace Meridian::Config
 {
+    const char* ToString(CompositorTiming a_timing) noexcept
+    {
+        switch (a_timing)
+        {
+        case CompositorTiming::BeforeRendererEnd:
+            return "BeforeRendererEnd";
+        case CompositorTiming::AfterRendererEnd:
+        default:
+            return "AfterRendererEnd";
+        }
+    }
+
     IniOverrides ParseIni(const char* a_iniText)
     {
         IniOverrides overrides{};
@@ -131,6 +143,22 @@ namespace Meridian::Config
             else
             {
                 WarnBadValue("General.AllowRemoteContent");
+            }
+        }
+
+        if (const char* value = ini.GetValue("Compatibility", "CompositorTiming", nullptr))
+        {
+            if (EqualsCaseInsensitive(value, "AfterRendererEnd"))
+            {
+                overrides.compositorTiming = CompositorTiming::AfterRendererEnd;
+            }
+            else if (EqualsCaseInsensitive(value, "BeforeRendererEnd"))
+            {
+                overrides.compositorTiming = CompositorTiming::BeforeRendererEnd;
+            }
+            else
+            {
+                WarnBadValue("Compatibility.CompositorTiming");
             }
         }
 

@@ -1,4 +1,5 @@
 #include "UIPlatformService.h"
+#include "Hooks/InputDispatchHook.h"
 #include "Hooks/PresentHook.h"
 #include "Hooks/ShutdownHook.hpp"
 #include "Menus/FocusMenu.h"
@@ -45,6 +46,12 @@ namespace Meridian::Services
         if (!Meridian::Hooks::PresentHook::IsInstalled())
         {
             m_logger->error("{}: present hook not installed — refusing to initialize (no rendering path)", NameOf(UIPlatformService));
+            return false;
+        }
+
+        if (!Meridian::Hooks::InputDispatchHook::IsInstalled())
+        {
+            m_logger->error("{}: input dispatch hook not installed — refusing to initialize (focused input cannot be isolated)", NameOf(UIPlatformService));
             return false;
         }
 

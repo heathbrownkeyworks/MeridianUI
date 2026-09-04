@@ -1,6 +1,12 @@
 #pragma once
 
 #include "PCH.h"
+#include "Config/IniConfig.h"
+
+namespace Meridian::Render
+{
+    enum class CompositorTarget;
+}
 
 namespace Meridian::Hooks
 {
@@ -13,13 +19,16 @@ namespace Meridian::Hooks
     class PresentHook
     {
     public:
-        static bool Install();
+        static bool Install(Meridian::Config::CompositorTiming a_timing);
         static bool IsInstalled();
 
     protected:
+        static void CompositeSafely(Meridian::Render::CompositorTarget a_target) noexcept;
         static void Detour(std::uint32_t a_p1);
 
         static inline REL::Relocation<void __fastcall(std::uint32_t)> s_original;
         static inline std::atomic_bool s_installed{false};
+        static inline std::atomic<Meridian::Config::CompositorTiming> s_timing{
+            Meridian::Config::CompositorTiming::AfterRendererEnd};
     };
 }

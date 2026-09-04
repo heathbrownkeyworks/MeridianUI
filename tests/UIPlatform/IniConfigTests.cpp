@@ -22,8 +22,10 @@ int main()
     {
         const auto o = Meridian::Config::ParseIni(
             "[General]\nRendererType = synccopy\nNativeMenuLangSwitching = false\nAllowRemoteContent = true\n"
+            "[Compatibility]\nCompositorTiming = beforerendererend\n"
             "[Debug]\nRemoteDebuggingEnabled = true\nRemoteDebuggingPort = 9111\nLogLevel = debug\n");
         Expect(o.rendererType.has_value() && *o.rendererType == Meridian::UI::RendererType::SyncCopy, "renderer parsed case-insensitively");
+        Expect(o.compositorTiming.has_value() && *o.compositorTiming == Meridian::Config::CompositorTiming::BeforeRendererEnd, "compositor timing parsed case-insensitively");
         Expect(o.nativeMenuLangSwitching.has_value() && !*o.nativeMenuLangSwitching, "bool parsed");
         Expect(o.allowRemoteContent.has_value() && *o.allowRemoteContent, "remote-content development opt-in parsed");
         Expect(o.remoteDebuggingPort.has_value() && *o.remoteDebuggingPort == 9111, "port parsed");
@@ -32,13 +34,19 @@ int main()
     // Empty text = all nullopt.
     {
         const auto o = Meridian::Config::ParseIni("");
-        Expect(!o.rendererType && !o.allowRemoteContent && !o.remoteDebuggingEnabled && !o.remoteDebuggingPort && !o.nativeMenuLangSwitching && !o.logLevel, "empty ini overrides nothing");
+        Expect(!o.rendererType && !o.compositorTiming && !o.allowRemoteContent && !o.remoteDebuggingEnabled && !o.remoteDebuggingPort && !o.nativeMenuLangSwitching && !o.logLevel, "empty ini overrides nothing");
     }
     // Malformed values stay nullopt.
     {
-        const auto o = Meridian::Config::ParseIni("[General]\nRendererType = Turbo\n[Debug]\nRemoteDebuggingPort = fast\n");
+        const auto o = Meridian::Config::ParseIni("[General]\nRendererType = Turbo\n[Compatibility]\nCompositorTiming = DuringLunch\n[Debug]\nRemoteDebuggingPort = fast\n");
         Expect(!o.rendererType, "unknown renderer name ignored");
+        Expect(!o.compositorTiming, "unknown compositor timing ignored");
         Expect(!o.remoteDebuggingPort, "non-numeric port ignored");
+    }
+    // The shipping order is accepted explicitly as well.
+    {
+        const auto o = Meridian::Config::ParseIni("[Compatibility]\nCompositorTiming = AfterRendererEnd\n");
+        Expect(o.compositorTiming.has_value() && *o.compositorTiming == Meridian::Config::CompositorTiming::AfterRendererEnd, "shipping compositor timing parsed");
     }
     // Numeric but out-of-range port stays nullopt.
     {

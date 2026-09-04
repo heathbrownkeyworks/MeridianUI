@@ -7,9 +7,18 @@
 
 namespace Meridian::Config
 {
+    enum class CompositorTiming
+    {
+        AfterRendererEnd,
+        BeforeRendererEnd
+    };
+
+    const char* ToString(CompositorTiming a_timing) noexcept;
+
     struct IniOverrides
     {
         std::optional<Meridian::UI::RendererType> rendererType;
+        std::optional<CompositorTiming> compositorTiming;
         std::optional<bool> remoteDebuggingEnabled;
         std::optional<int> remoteDebuggingPort;
         std::optional<bool> nativeMenuLangSwitching;

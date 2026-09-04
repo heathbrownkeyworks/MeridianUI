@@ -24,6 +24,12 @@ namespace Meridian::Services
         m_isSwitchActive = a_value;
     }
 
+    bool InputLangSwitchService::IsActive()
+    {
+        std::lock_guard<std::mutex> lock(m_switchActiveMutex);
+        return m_isSwitchActive;
+    }
+
     RE::BSEventNotifyControl InputLangSwitchService::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
     {
         if (a_event == nullptr || *a_event == nullptr)

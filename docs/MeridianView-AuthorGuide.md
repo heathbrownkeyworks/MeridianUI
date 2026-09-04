@@ -116,6 +116,8 @@ Use `PauseGame` for menu-style UIs such as Horde and `Unpaused` for overlays tha
 
 While a Meridian view owns focus, Meridian translates keyboard button events into Chromium key-down, character, and key-up events and consumes them before downstream Skyrim input sinks. Consumers must not hook `BSInputDeviceManager::PollInputDevices` or remove keyboard events from its linked list; doing so prevents Meridian and Chromium from ever receiving the keys.
 
+Meridian installs a final guard after SKSE plugin loading and reasserts its sink ordering at the engine dispatch boundary. If Meridian consumes a focused batch, the guard hides that batch before chained direct-input hooks (including Open Animation Replacer) or downstream sinks can inspect it. The original batch is preserved byte-for-byte when Meridian does not consume it. On focus loss Meridian sends Chromium any balancing key-up events before clearing modifiers. When no Meridian view owns focus, existing Skyrim and mod hotkeys are unchanged.
+
 Meridian automatically detects focus in text-capable `input` elements, `textarea`, and `contenteditable` content. It owns one balanced `ControlMap::AllowTextInput` lease for the focused view and releases it on blur, navigation, focus loss, hide, destruction, or shutdown. Consumer pages do not need native `inputFocused`/`inputBlurred` callbacks.
 
 Escape behavior remains page-specific. Handle it with a normal `keydown` listener and call the consumer's registered close function after any modal or sub-screen priorities have been resolved. This lets Chromium receive Escape first while Meridian still prevents the key from leaking into gameplay.

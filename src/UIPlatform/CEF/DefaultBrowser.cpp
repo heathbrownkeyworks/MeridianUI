@@ -521,14 +521,21 @@ namespace Meridian::CEF
         const auto host = browser != nullptr ? browser->GetHost() : nullptr;
         if (host != nullptr)
         {
+            // Chromium must see balancing key-ups while it still owns focus.
+            // SetFocus(false) alone does not repair Meridian's converter state
+            // if another menu or an API transition interrupted a held key.
+            m_keyInputConverter.ReleasePressedKeys();
             if (m_lastMouseInside)
             {
                 host->SendMouseMoveEvent(m_lastCefMouseEvent, true);
             }
             host->SetFocus(false);
         }
+        else
+        {
+            m_keyInputConverter.Clear();
+        }
         m_lastMouseInside = false;
-        m_keyInputConverter.Clear();
     }
 
     void DefaultBrowser::SetTextInputActive(bool a_active)

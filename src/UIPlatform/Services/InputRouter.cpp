@@ -1,12 +1,26 @@
 #include "InputRouter.h"
 
+#include "Common/InputSinkPriority.h"
 #include "Menus/FocusArbiter.h"
 #include "Render/RenderHost.h"
+#include "Services/InputLangSwitchService.h"
 
 #include <vector>
 
 namespace Meridian::Services
 {
+    thread_local std::uint32_t InputRouter::s_preprocessedDispatchDepth = 0;
+
+    InputRouter::PreprocessedDispatchScope::PreprocessedDispatchScope()
+    {
+        ++InputRouter::s_preprocessedDispatchDepth;
+    }
+
+    InputRouter::PreprocessedDispatchScope::~PreprocessedDispatchScope()
+    {
+        --InputRouter::s_preprocessedDispatchDepth;
+    }
+
     InputRouter& InputRouter::GetSingleton()
     {
         static InputRouter instance;
@@ -15,7 +29,7 @@ namespace Meridian::Services
 
     void InputRouter::Register()
     {
-        if (m_registered)
+        if (m_registered.load(std::memory_order_acquire))
         {
             spdlog::warn("{}: Register() called more than once — ignoring", NameOf(InputRouter));
             return;
@@ -25,7 +39,7 @@ namespace Meridian::Services
         inputEventSource->lock.Lock();
         Meridian::Utils::PushFront<RE::BSTEventSink<RE::InputEvent*>>(inputEventSource->sinks, this);
         inputEventSource->lock.Unlock();
-        m_registered = true;
+        m_registered.store(true, std::memory_order_release);
     }
 
     void InputRouter::SetShuttingDown(bool a_value)
@@ -33,9 +47,35 @@ namespace Meridian::Services
         m_isShuttingDown.store(a_value, std::memory_order_release);
     }
 
+    void InputRouter::PrioritizeForDispatch(
+        RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
+    {
+        if (!m_registered.load(std::memory_order_acquire) || a_eventSource == nullptr)
+        {
+            return;
+        }
+
+        using Sink = RE::BSTEventSink<RE::InputEvent*>;
+        auto* router = static_cast<Sink*>(this);
+        auto* languageSwitch = static_cast<Sink*>(&InputLangSwitchService::GetSingleton());
+
+        RE::BSSpinLockGuard lock(a_eventSource->lock);
+        Meridian::Common::PromoteInputSinks(
+            a_eventSource->sinks,
+            router,
+            languageSwitch);
+    }
+
     RE::BSEventNotifyControl InputRouter::ProcessEvent(RE::InputEvent* const* a_event,
                                                        RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
     {
+        // The outer dispatch guard already delivered this batch to Meridian.
+        // Continue the engine sink walk without sending it to Chromium twice.
+        if (s_preprocessedDispatchDepth != 0)
+        {
+            return RE::BSEventNotifyControl::kContinue;
+        }
+
         if (a_event == nullptr || *a_event == nullptr ||
             m_isShuttingDown.load(std::memory_order_acquire))
         {

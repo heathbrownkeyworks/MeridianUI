@@ -16,6 +16,7 @@ namespace Meridian::Services
 
     public:
         void SetActive(bool a_value);
+        bool IsActive();
 
         // RE::BSTEventSink<RE::InputEvent*>
         RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;

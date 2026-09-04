@@ -11,7 +11,7 @@ namespace Meridian::Converters
         keyEvent.type = KEYEVENT_RAWKEYDOWN;
         OnKeyDown(keyEvent);
 
-        const auto wchar = VkCodeToChar(a_scanCode, a_vkCode, m_currentModifiers & (EVENTFLAG_SHIFT_DOWN | EVENTFLAG_CAPS_LOCK_ON));
+        const auto wchar = VkCodeToChar(a_scanCode, a_vkCode, m_currentModifiers);
         if (wchar != 0)
         {
             keyEvent.type = KEYEVENT_CHAR;
@@ -36,11 +36,15 @@ namespace Meridian::Converters
         return vkCode;
     }
 
-    wchar_t KeyInputConverter::VkCodeToChar(const std::uint32_t a_scanCode, const std::uint32_t a_vkCode, const bool a_shift)
+    wchar_t KeyInputConverter::VkCodeToChar(const std::uint32_t a_scanCode,
+                                            const std::uint32_t a_vkCode,
+                                            std::uint32_t a_modifiers)
     {
         // auto keyboard = RE::BSInputDeviceManager::GetSingleton()->GetKeyboard();
         static uint8_t s_state[256] = {0};
-        s_state[VK_SHIFT] = a_shift ? 0xFF : 0;
+        s_state[VK_SHIFT] = (a_modifiers & EVENTFLAG_SHIFT_DOWN) != 0 ? 0x80 : 0;
+        s_state[VK_CAPITAL] = (a_modifiers & EVENTFLAG_CAPS_LOCK_ON) != 0 ? 0x01 : 0;
+        s_state[VK_NUMLOCK] = (a_modifiers & EVENTFLAG_NUM_LOCK_ON) != 0 ? 0x01 : 0;
 
         wchar_t unicodeChar;
         if (ToUnicodeEx(a_vkCode, a_scanCode, s_state, &unicodeChar, 1, 0, s_currentHKL) != 1)
@@ -123,6 +127,59 @@ namespace Meridian::Converters
 
     void KeyInputConverter::Clear()
     {
+        std::lock_guard lock(m_stateMutex);
+        m_pressedKeyState.Clear();
+        m_currentModifiers = 0;
+        m_lastScanCode = 0;
+        m_lastKeyHeldDuration = 0.0f;
+    }
+
+    bool KeyInputConverter::IsModifierVirtualKey(std::uint32_t a_vkCode)
+    {
+        switch (a_vkCode)
+        {
+        case VK_SHIFT:
+        case VK_CONTROL:
+        case VK_MENU:
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+        case VK_LMENU:
+        case VK_RMENU:
+        case VK_CAPITAL:
+        case VK_NUMLOCK:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    void KeyInputConverter::SyncLockModifiers()
+    {
+        UpdateCefKeyModifiers(
+            EVENTFLAG_CAPS_LOCK_ON,
+            (GetKeyState(VK_CAPITAL) & 0x0001) != 0);
+        UpdateCefKeyModifiers(
+            EVENTFLAG_NUM_LOCK_ON,
+            (GetKeyState(VK_NUMLOCK) & 0x0001) != 0);
+    }
+
+    void KeyInputConverter::ReleasePressedKeys()
+    {
+        std::lock_guard lock(m_stateMutex);
+        for (const auto& key : m_pressedKeyState.Drain())
+        {
+            UpdateModifiersFromVK(key.virtualKey, false);
+
+            CefKeyEvent keyEvent{};
+            keyEvent.windows_key_code = key.virtualKey;
+            keyEvent.native_key_code = key.scanCode;
+            keyEvent.modifiers = m_currentModifiers;
+            keyEvent.type = KEYEVENT_KEYUP;
+            OnKeyUp(keyEvent);
+        }
+
         m_currentModifiers = 0;
         m_lastScanCode = 0;
         m_lastKeyHeldDuration = 0.0f;
@@ -130,6 +187,7 @@ namespace Meridian::Converters
 
     void KeyInputConverter::UpdateCefKeyModifiers(const cef_event_flags_t a_flags, bool a_isKeyDown)
     {
+        std::lock_guard lock(m_stateMutex);
         if (a_isKeyDown)
         {
             m_currentModifiers |= a_flags;
@@ -142,6 +200,7 @@ namespace Meridian::Converters
 
     void KeyInputConverter::UpdateModifiersFromVK(const std::uint32_t a_vkCode, bool a_isKeyDown)
     {
+        std::lock_guard lock(m_stateMutex);
         if (a_vkCode >= VK_NUMPAD0 && a_vkCode <= VK_DIVIDE)
         {
             UpdateCefKeyModifiers(EVENTFLAG_IS_KEY_PAD, a_isKeyDown);
@@ -151,7 +210,8 @@ namespace Meridian::Converters
             switch (a_vkCode)
             {
             case VK_CAPITAL:
-                UpdateCefKeyModifiers(EVENTFLAG_CAPS_LOCK_ON, a_isKeyDown);
+                // Lock flags represent the OS toggle state, not the physical
+                // key state. SyncLockModifiers refreshes them for every event.
                 break;
             case VK_SHIFT:
                 UpdateCefKeyModifiers(EVENTFLAG_SHIFT_DOWN, a_isKeyDown);
@@ -163,7 +223,6 @@ namespace Meridian::Converters
                 UpdateCefKeyModifiers(EVENTFLAG_ALT_DOWN, a_isKeyDown);
                 break;
             case VK_NUMLOCK:
-                UpdateCefKeyModifiers(EVENTFLAG_NUM_LOCK_ON, a_isKeyDown);
                 break;
             case VK_LCONTROL:
                 UpdateCefKeyModifiers(EVENTFLAG_CONTROL_DOWN, a_isKeyDown);
@@ -197,20 +256,24 @@ namespace Meridian::Converters
 
     std::uint32_t KeyInputConverter::GetCurrentModifiers()
     {
+        std::lock_guard lock(m_stateMutex);
         return m_currentModifiers;
     }
 
     void KeyInputConverter::ProcessButton(const RE::ButtonEvent* a_event)
     {
+        std::lock_guard lock(m_stateMutex);
         const auto isKeyStateChanged = a_event->IsDown() || a_event->IsUp();
         if (isKeyStateChanged)
         {
             const auto scanCode = a_event->GetIDCode();
             const auto vkCode = GetVirtualKey(scanCode);
+            SyncLockModifiers();
             UpdateModifiersFromVK(vkCode, a_event->IsDown());
 
             if (a_event->IsDown())
             {
+                m_pressedKeyState.Press(scanCode, vkCode, IsModifierVirtualKey(vkCode));
                 m_lastScanCode = scanCode;
                 m_lastKeyHeldDuration = KEY_FIRST_CHAR_DELAY;
 
@@ -224,6 +287,7 @@ namespace Meridian::Converters
                 keyEvent.modifiers = m_currentModifiers;
                 keyEvent.type = KEYEVENT_KEYUP;
 
+                m_pressedKeyState.Release(scanCode);
                 OnKeyUp(keyEvent);
             }
         }
@@ -237,7 +301,8 @@ namespace Meridian::Converters
 
     void KeyInputConverter::ProcessAltTab()
     {
-        Clear();
+        std::lock_guard lock(m_stateMutex);
+        ReleasePressedKeys();
 
         if (!m_fakeAltTabButtonEvent)
         {
@@ -253,5 +318,6 @@ namespace Meridian::Converters
 
         m_fakeAltTabButtonEvent->idCode = RE::BSKeyboardDevice::Keys::kTab;
         ProcessButton(m_fakeAltTabButtonEvent);
+        ReleasePressedKeys();
     }
 }

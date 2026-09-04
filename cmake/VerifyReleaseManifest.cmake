@@ -34,6 +34,7 @@ set(required_release_files
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/NifSceneAPI.h"
     "${ROOT}/MeridianUI/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/AE_1.7.104_RUNTIME_GATE.md"
+    "${ROOT}/MeridianUI/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/licenses/cef-prebuilt.txt"

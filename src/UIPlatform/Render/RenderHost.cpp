@@ -6,6 +6,26 @@
 
 namespace Meridian::Render
 {
+    namespace
+    {
+        const char* ToString(CompositorTarget a_target) noexcept
+        {
+            return a_target == CompositorTarget::BoundGameRenderTarget ?
+                "BoundGameRenderTarget" :
+                "SwapChainBackbuffer";
+        }
+
+        Microsoft::WRL::ComPtr<IUnknown> GetComIdentity(IUnknown* a_object) noexcept
+        {
+            Microsoft::WRL::ComPtr<IUnknown> identity;
+            if (a_object != nullptr)
+            {
+                a_object->QueryInterface(IID_PPV_ARGS(identity.GetAddressOf()));
+            }
+            return identity;
+        }
+    }
+
     RenderHost& RenderHost::GetSingleton()
     {
         static RenderHost singleton;
@@ -44,21 +64,40 @@ namespace Meridian::Render
             return false;
         }
 
+        m_immediateContext->GetDevice(m_gameDevice.ReleaseAndGetAddressOf());
+        if (m_gameDevice == nullptr)
+        {
+            m_logger->error("{}: immediate context returned no native D3D11 device", NameOf(RenderHost));
+            return false;
+        }
+
+        const auto rendererDeviceIdentity = GetComIdentity(device);
+        const auto gameDeviceIdentity = GetComIdentity(m_gameDevice.Get());
+        m_logger->info(
+            "{}: normalized render device rendererInterface={:p} queriedDevice3={:p} contextDevice={:p} rendererIdentity={:p} contextIdentity={:p} sameIdentity={}",
+            NameOf(RenderHost),
+            static_cast<void*>(device),
+            static_cast<void*>(m_device3.Get()),
+            static_cast<void*>(m_gameDevice.Get()),
+            static_cast<void*>(rendererDeviceIdentity.Get()),
+            static_cast<void*>(gameDeviceIdentity.Get()),
+            rendererDeviceIdentity != nullptr && rendererDeviceIdentity.Get() == gameDeviceIdentity.Get());
+
         const auto nativeMenuRenderData = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().renderTargets[RE::RENDER_TARGETS::kMENUBG];
         D3D11_TEXTURE2D_DESC textDesc;
         reinterpret_cast<ID3D11Texture2D*>(nativeMenuRenderData.texture)->GetDesc(&textDesc);
 
-        m_renderData.device = device;
+        m_renderData.device = m_gameDevice.Get();
         m_renderData.deviceContext = m_immediateContext.Get();
         m_renderData.spriteBatch = std::make_shared<::DirectX::SpriteBatch>(m_immediateContext.Get());
-        m_renderData.commonStates = std::make_shared<::DirectX::CommonStates>(device);
+        m_renderData.commonStates = std::make_shared<::DirectX::CommonStates>(m_gameDevice.Get());
         m_renderData.width = textDesc.Width;
         m_renderData.height = textDesc.Height;
 
         // Private device for the ring-buffer frame transport. Failure is
         // non-fatal: clients fall back to the SyncCopy renderer.
         auto platformDevice = std::make_shared<Meridian::Render::RenderDevice>();
-        if (platformDevice->Create(device))
+        if (platformDevice->Create(m_gameDevice.Get()))
         {
             m_renderData.platformDevice = std::move(platformDevice);
         }
@@ -83,8 +122,52 @@ namespace Meridian::Render
         return true;
     }
 
+    bool RenderHost::RefreshSwapChain()
+    {
+        const auto* renderer = RE::BSGraphics::Renderer::GetSingleton();
+        if (renderer == nullptr)
+        {
+            std::uint32_t suppressed = 0;
+            if (m_getBufferFailThrottle.ShouldLog(suppressed))
+            {
+                m_logger->error("{}: renderer unavailable while refreshing swap chain ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+            }
+            return false;
+        }
+
+        const auto& runtime = renderer->GetRuntimeData();
+        auto* currentSwapChain = reinterpret_cast<IDXGISwapChain*>(runtime.renderWindows[0].swapChain);
+        if (currentSwapChain == nullptr)
+        {
+            std::uint32_t suppressed = 0;
+            if (m_getBufferFailThrottle.ShouldLog(suppressed))
+            {
+                m_logger->error("{}: current runtime swap chain is null ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+            }
+            return false;
+        }
+
+        if (currentSwapChain != m_swapChain.Get())
+        {
+            auto* previousSwapChain = m_swapChain.Get();
+            m_swapChain = currentSwapChain;
+            m_targetLogPending = true;
+            m_logger->info(
+                "{}: runtime swap chain changed {:p} -> {:p}",
+                NameOf(RenderHost),
+                static_cast<void*>(previousSwapChain),
+                static_cast<void*>(currentSwapChain));
+        }
+        return true;
+    }
+
     bool RenderHost::EnsureBackbufferTarget(Microsoft::WRL::ComPtr<ID3D11Texture2D>& a_backbuffer)
     {
+        if (!RefreshSwapChain())
+        {
+            return false;
+        }
+
         if (FAILED(m_swapChain->GetBuffer(0, IID_PPV_ARGS(a_backbuffer.GetAddressOf()))))
         {
             std::uint32_t suppressed = 0;
@@ -95,8 +178,98 @@ namespace Meridian::Render
             return false;
         }
 
+        return ValidateTarget(
+            a_backbuffer.Get(),
+            CompositorTarget::SwapChainBackbuffer,
+            m_swapChain.Get());
+    }
+
+    bool RenderHost::EnsureBoundGameTarget(Microsoft::WRL::ComPtr<ID3D11RenderTargetView>& a_targetView)
+    {
+        m_immediateContext->OMGetRenderTargets(1, a_targetView.ReleaseAndGetAddressOf(), nullptr);
+        if (a_targetView == nullptr)
+        {
+            std::uint32_t suppressed = 0;
+            if (m_getBufferFailThrottle.ShouldLog(suppressed))
+            {
+                m_logger->error("{}: no game render target is bound before renderer end ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+            }
+            return false;
+        }
+
+        Microsoft::WRL::ComPtr<ID3D11Resource> resource;
+        a_targetView->GetResource(resource.GetAddressOf());
+        Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+        if (resource == nullptr || FAILED(resource.As(&texture)) || texture == nullptr)
+        {
+            std::uint32_t suppressed = 0;
+            if (m_getBufferFailThrottle.ShouldLog(suppressed))
+            {
+                m_logger->error("{}: bound game render target is not a D3D11 texture ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+            }
+            return false;
+        }
+
+        return ValidateTarget(
+            texture.Get(),
+            CompositorTarget::BoundGameRenderTarget,
+            a_targetView.Get());
+    }
+
+    bool RenderHost::ValidateTarget(
+        ID3D11Texture2D* a_texture,
+        CompositorTarget a_target,
+        void* a_ownerIdentity)
+    {
         D3D11_TEXTURE2D_DESC desc{};
-        a_backbuffer->GetDesc(&desc);
+        a_texture->GetDesc(&desc);
+        Microsoft::WRL::ComPtr<ID3D11Device> targetDevice;
+        a_texture->GetDevice(targetDevice.GetAddressOf());
+        const auto targetDeviceIdentity = GetComIdentity(targetDevice.Get());
+        const auto renderDeviceIdentity = GetComIdentity(m_renderData.device);
+        const bool sameDevice =
+            targetDeviceIdentity != nullptr &&
+            targetDeviceIdentity.Get() == renderDeviceIdentity.Get();
+        const bool targetDescriptionChanged =
+            desc.Width != m_lastTargetWidth ||
+            desc.Height != m_lastTargetHeight ||
+            desc.Format != m_lastTargetFormat;
+        const bool targetSourceChanged =
+            !m_lastTargetSource.has_value() || *m_lastTargetSource != a_target;
+
+        if (m_targetLogPending || targetDescriptionChanged || targetSourceChanged)
+        {
+            m_logger->info(
+                "{}: compositor target source={} owner={:p} texture={:p} dimensions={}x{} format={} targetDevice={:p} renderDevice={:p} targetIdentity={:p} renderIdentity={:p} sameDevice={}",
+                NameOf(RenderHost),
+                ToString(a_target),
+                a_ownerIdentity,
+                static_cast<void*>(a_texture),
+                desc.Width,
+                desc.Height,
+                static_cast<std::uint32_t>(desc.Format),
+                static_cast<void*>(targetDevice.Get()),
+                static_cast<void*>(m_renderData.device),
+                static_cast<void*>(targetDeviceIdentity.Get()),
+                static_cast<void*>(renderDeviceIdentity.Get()),
+                sameDevice);
+            m_lastTargetWidth = desc.Width;
+            m_lastTargetHeight = desc.Height;
+            m_lastTargetFormat = desc.Format;
+            m_lastTargetSource = a_target;
+            m_targetLogPending = false;
+        }
+
+        if (!sameDevice)
+        {
+            std::uint32_t suppressed = 0;
+            if (m_getBufferFailThrottle.ShouldLog(suppressed))
+            {
+                m_logger->error("{}: refusing {} from a different D3D11 device ({} more suppressed in the last window)", NameOf(RenderHost), ToString(a_target), suppressed);
+            }
+            return false;
+        }
+
         if (desc.Width != m_renderData.width || desc.Height != m_renderData.height)
         {
             const int oldW = static_cast<int>(m_renderData.width);
@@ -114,7 +287,7 @@ namespace Meridian::Render
         return true;
     }
 
-    void RenderHost::OnPresent()
+    void RenderHost::OnPresent(CompositorTarget a_target)
     {
         if (!m_inited.load(std::memory_order_acquire) ||
             m_isShuttingDown.load(std::memory_order_acquire))
@@ -129,9 +302,30 @@ namespace Meridian::Render
         }
 
         Microsoft::WRL::ComPtr<ID3D11Texture2D> backbuffer;
-        if (!EnsureBackbufferTarget(backbuffer))
+        Microsoft::WRL::ComPtr<ID3D11RenderTargetView> compositorRTV;
+        if (a_target == CompositorTarget::BoundGameRenderTarget)
         {
-            return;
+            if (!EnsureBoundGameTarget(compositorRTV))
+            {
+                return;
+            }
+        }
+        else
+        {
+            if (!EnsureBackbufferTarget(backbuffer))
+            {
+                return;
+            }
+
+            // Created fresh every present, never cached on the host: a cached
+            // RTV holds an outstanding reference to the backbuffer, and DXGI
+            // requires every backbuffer reference released before
+            // IDXGISwapChain::ResizeBuffers will succeed.
+            if (FAILED(m_renderData.device->CreateRenderTargetView(backbuffer.Get(), nullptr, compositorRTV.GetAddressOf())))
+            {
+                m_logger->error("{}: CreateRenderTargetView failed", NameOf(RenderHost));
+                return;
+            }
         }
 
         // Native layers render their off-screen content before the shared
@@ -151,20 +345,6 @@ namespace Meridian::Render
             {
                 m_logger->error("{}: unknown exception in native layer Prepare", NameOf(RenderHost));
             }
-        }
-
-        // Created fresh every present, never cached on the host: a cached RTV
-        // holds an outstanding reference to the backbuffer, and DXGI requires
-        // every backbuffer reference released before
-        // IDXGISwapChain::ResizeBuffers will succeed. Caching this would make
-        // our own resolution-change handling above self-defeating — the
-        // resize it detects would never actually be able to happen. Scoped to
-        // this function via ComPtr so it's released before OnPresent returns.
-        Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backbufferRTV;
-        if (FAILED(m_renderData.device->CreateRenderTargetView(backbuffer.Get(), nullptr, backbufferRTV.GetAddressOf())))
-        {
-            m_logger->error("{}: CreateRenderTargetView failed", NameOf(RenderHost));
-            return;
         }
 
         MERIDIAN_PROBE_SCOPE_BEGIN();
@@ -248,7 +428,7 @@ namespace Meridian::Render
         PresentStateGuard stateGuard{
             m_renderData, ctx, savedRTVs, savedDSV, savedViewportCount, savedViewports, menus, m_logger};
 
-        ID3D11RenderTargetView* rtv = backbufferRTV.Get();
+        ID3D11RenderTargetView* rtv = compositorRTV.Get();
         ctx->OMSetRenderTargets(1, &rtv, nullptr);
         D3D11_VIEWPORT viewport{0.0f, 0.0f,
                                 static_cast<float>(m_renderData.width),

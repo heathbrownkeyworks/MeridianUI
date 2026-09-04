@@ -5,7 +5,7 @@
 
 namespace Meridian::Hooks
 {
-    bool PresentHook::Install()
+    bool PresentHook::Install(Meridian::Config::CompositorTiming a_timing)
     {
         try
         {
@@ -21,9 +21,14 @@ namespace Meridian::Hooks
                 return false;
             }
             auto& trampoline = SKSE::GetTrampoline();
+            s_timing.store(a_timing, std::memory_order_release);
             s_original = trampoline.write_call<5>(callSite.address(), &PresentHook::Detour);
             s_installed.store(true, std::memory_order_release);
-            spdlog::info("{}: installed at {:X}", NameOf(PresentHook), callSite.address());
+            spdlog::info(
+                "{}: installed at {:X}; compositor timing={}",
+                NameOf(PresentHook),
+                callSite.address(),
+                Meridian::Config::ToString(a_timing));
             return true;
         }
         catch (const std::exception& e)
@@ -38,9 +43,35 @@ namespace Meridian::Hooks
         return s_installed.load(std::memory_order_acquire);
     }
 
+    void PresentHook::CompositeSafely(Meridian::Render::CompositorTarget a_target) noexcept
+    {
+        try
+        {
+            Meridian::Render::RenderHost::GetSingleton().OnPresent(a_target);
+        }
+        catch (const std::exception& error)
+        {
+            spdlog::error("{}: compositor failed: {}", NameOf(PresentHook), error.what());
+        }
+        catch (...)
+        {
+            spdlog::error("{}: compositor failed with an unknown exception", NameOf(PresentHook));
+        }
+    }
+
     void PresentHook::Detour(std::uint32_t a_p1)
     {
+        const auto timing = s_timing.load(std::memory_order_acquire);
+        if (timing == Meridian::Config::CompositorTiming::BeforeRendererEnd)
+        {
+            CompositeSafely(Meridian::Render::CompositorTarget::BoundGameRenderTarget);
+        }
+
         s_original(a_p1);
-        Meridian::Render::RenderHost::GetSingleton().OnPresent();
+
+        if (timing == Meridian::Config::CompositorTiming::AfterRendererEnd)
+        {
+            CompositeSafely(Meridian::Render::CompositorTarget::SwapChainBackbuffer);
+        }
     }
 }

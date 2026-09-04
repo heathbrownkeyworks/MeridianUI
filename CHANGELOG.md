@@ -4,6 +4,21 @@ All notable MeridianUI changes are recorded here.
 
 ## 1.2.0 - Candidate
 
+### Fixed
+
+- Reacquire DXGI keyed-mutex ownership before every retained RingBuffer draw.
+  Newly painted frames still use key 1, while later Skyrim presents reacquire
+  key 0 after the preceding draw releases it, preventing an otherwise static
+  browser surface from flickering or appearing only during mouse movement.
+- Install a distinct outer input guard after SKSE plugin loading, deliver each
+  batch to Meridian once, and hide consumed batches before earlier-installed
+  direct input hooks such as Open Animation Replacer's Shift+O handler can
+  observe focused browser keystrokes. Sink-priority normalization remains as a
+  fallback for ordinary event consumers.
+- Emit balancing Chromium key-up events before browser focus is released,
+  including Alt-Tab transitions, so interrupted keys and modifiers cannot
+  remain logically held when control returns.
+
 ### Changed
 
 - Updated the native platform and bridge plugins to CommonLibSSE-NG 7.0.0 at
@@ -39,12 +54,18 @@ All notable MeridianUI changes are recorded here.
 
 ### Candidate status
 
-- The clean unsigned Release build, production manifest, and all 46 automated
+- The clean unsigned Release build, production manifest, and all 48 automated
   tests pass in the isolated candidate directory.
 - Skyrim AE 1.6.1170 in-game validation passed with the deployed unsigned
   1.2.0 candidate.
+- The owner confirmed that focused Shift+O now types in Tailor without opening
+  Open Animation Replacer 3.1.5 on the post-plugin-load outer-guard candidate.
+- The owner confirmed that the SE 1.5.97 Tailor RingBuffer candidate remains
+  continuously visible without requiring mouse movement.
 - Skyrim 1.7.104 with SKSE 2.3.1 and Address Library 13 is **NOT RUN**.
-- SE 1.5.97 is **NOT RUN**. VR and DLSS 5 compatibility remain deferred.
+- SkyrimUpscaler Build 14 with DLSS Neural Reconstruction passed on AE
+  1.6.1170 using the opt-in `BeforeRendererEnd` compositor timing.
+- The broader SE cross-feature matrix is **NOT RUN**. VR remains deferred.
 
 ## 1.1.2 - 2026-09-02
 

@@ -1,5 +1,6 @@
 #include "FrameTransport.h"
 
+#include "FrameConsumerSync.h"
 #include "FrameTransportLog.h"
 #include "RenderDevice.h"
 
@@ -256,20 +257,22 @@ namespace Meridian::Render
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> FrameTransport::ConsumeSRV()
     {
         std::lock_guard lock(m_ringMutex);
-        if (m_ring.publishedSlot < 0)
+        if (m_ring.publishedSlot < 0 || m_gameOwnedSlot >= 0)
         {
             return nullptr;
         }
         auto& slot = m_slots[m_ring.publishedSlot];
-        if (slot.awaitingGameAcquire.load(std::memory_order_acquire))
+        const auto acquirePlan = PlanConsumerAcquire(
+            slot.awaitingGameAcquire.load(std::memory_order_acquire));
+        if (slot.gameMutex->AcquireSync(acquirePlan.acquireKey, 0) != S_OK)
         {
-            if (slot.gameMutex->AcquireSync(1, 0) != S_OK)
-            {
-                return nullptr;
-            }
-            slot.awaitingGameAcquire.store(false, std::memory_order_release);
-            m_gameOwnedSlot = m_ring.publishedSlot;
+            return nullptr;
         }
+        if (acquirePlan.clearsAwaitingGameAcquire)
+        {
+            slot.awaitingGameAcquire.store(false, std::memory_order_release);
+        }
+        m_gameOwnedSlot = m_ring.publishedSlot;
         m_ring.readerSlot = m_ring.publishedSlot;
         return slot.gameSRV;
     }
