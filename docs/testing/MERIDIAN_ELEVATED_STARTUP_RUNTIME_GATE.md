@@ -34,11 +34,29 @@ included. The separate cross-device render-target report is outside this fix.
 | Successful lifecycle control | PASS | One initialization and scheme registration, duplicate rejection, one close barrier and shutdown, no reinitialization after shutdown. |
 | Initial unsigned candidate build | PASS | MSVC 19.44, all native targets built; no compiler warnings or errors in the build log. |
 | Initial unsigned candidate tests | PASS | 51/51 tests passed, including the release manifest check. |
-| Signed 1.2.1 build and tests | PENDING | Verify compiled versions, the full CTest suite, and all packaged Authenticode signatures before deployment. |
+| Signed 1.2.1 build and tests | PASS | All 52 Release tests passed, including release manifest and signature verification. All 12 packaged DLL/EXE artifacts have valid Meridian signatures; the three native Meridian binaries report 1.2.1.0. |
 
 The regression executable compiles the actual `CEFService.cpp` against counted
 CEF test doubles. It does not launch Chromium or Skyrim. These tests prove the
 service's retry and cleanup behavior; they do not prove the elevated game launch.
+
+## Signed 1.2.1 build
+
+- Implementation commit: `342129f` (`fix: support elevated MO2 startup in Meridian UI 1.2.1`).
+- Build: `E:/tmp/MeridianUI-1.2.1-release-20260905/build`.
+- Staged Data: `E:/tmp/MeridianUI-1.2.1-release-20260905/build/dist/Release/Data`.
+- Compiled native version: `1.2.1.0`; public API versions remain unchanged.
+- All 12 packaged DLL/EXE files passed Authenticode verification with the
+  Meridian publisher. Existing valid vendor signatures were preserved.
+- Full Release build and 52/52 CTest checks passed. Logs are
+  `E:/tmp/MeridianUI-1.2.1-release-20260905/build-release.log` and
+  `E:/tmp/MeridianUI-1.2.1-release-20260905/ctest-release.log`.
+
+| Artifact | SHA-256 |
+|---|---|
+| `Data/MeridianUI/MeridianUI.dll` | `D15D78AFB6DB1D20B4F00886C09FB45EE74798177AA7CE89265CE393561A46C1` |
+| `Data/MeridianUI/MeridianCEFSubprocess.exe` | `DFF7EBB5CE65AEE72747734181A52EB425976BC720C927585373725835B80ADB` |
+| `Data/SKSE/Plugins/MeridianUIPlugin.dll` | `97928CDE92A9943C4764754E521ACAB2A8DCCC2870292E96CEB74BD2732B8B45` |
 
 ## Initial unsigned candidate
 
