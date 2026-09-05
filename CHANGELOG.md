@@ -2,6 +2,18 @@
 
 All notable MeridianUI changes are recorded here.
 
+## 1.2.1 - 2026-09-05
+
+### Fixed
+
+- Preserve Skyrim's launch privileges during CEF startup so an elevated MO2
+  launch does not trigger Chromium's host relaunch and exit code 38.
+- Stop retrying CEF after initialization fails, retain the original error code,
+  and log that Skyrim must be restarted before trying again.
+
+Elevated and ordinary MO2 gameplay validation for this change is **NOT RUN**.
+See the [elevated startup runtime gate](docs/testing/MERIDIAN_ELEVATED_STARTUP_RUNTIME_GATE.md).
+
 ## 1.2.0 - Candidate
 
 ### Fixed

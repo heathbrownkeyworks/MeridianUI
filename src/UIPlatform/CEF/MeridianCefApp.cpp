@@ -29,6 +29,15 @@ namespace Meridian::CEF
     // command line switches https://peter.sh/experiments/chromium-command-line-switches/
     void MeridianCefApp::OnBeforeCommandLineProcessing(CefString const& process_type, CefRefPtr<CefCommandLine> command_line)
     {
+        if (process_type.empty())
+        {
+            // CEF is embedded in Skyrim: Chromium must not relaunch the game
+            // to drop elevation inherited from MO2. This does not elevate a
+            // normal launch. See https://github.com/chromiumembedded/cef/issues/3960.
+            command_line->AppendSwitch("do-not-de-elevate");
+            spdlog::info(NameOf(MeridianCefApp) ": preserving host launch privileges (do-not-de-elevate)");
+        }
+
         // disable creation of a GPUCache/ folder on disk
         // command_line->AppendSwitch("disable-gpu-shader-disk-cache");
 

@@ -8,7 +8,7 @@ option(MERIDIAN_BUILD_NIF_TEST "Build the standalone MeridianNifTest SKSE consum
 # Version
 set(LIB_MAJOR_VERSION 1)
 set(LIB_MINOR_VERSION 2)
-set(LIB_PATCH_VERSION 0)
+set(LIB_PATCH_VERSION 1)
 set(API_MAJOR_VERSION 1)
 set(API_MINOR_VERSION 0)
 
@@ -216,6 +216,24 @@ add_dependencies(${CEFSubprocessProjectName} CefLibraryFiles)
 sign_output(${CEFSubprocessProjectName})
 
 if(BUILD_TESTING)
+    # Exercise the production service with a counted CEF boundary. No Skyrim
+    # process or libcef.dll is loaded by these failure-injection tests.
+    add_executable(
+        CEFServiceStartupTests
+            tests/UIPlatform/CEFServiceStartupTests.cpp
+            src/UIPlatform/Services/CEFService.cpp
+    )
+    target_include_directories(
+        CEFServiceStartupTests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/UIPlatform/CEFServiceStubs
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
+    )
+    set_compile_options(CEFServiceStartupTests)
+    add_test(NAME CEFStartupCode38Tests COMMAND CEFServiceStartupTests code38)
+    add_test(NAME CEFStartupOtherFailureTests COMMAND CEFServiceStartupTests code1)
+    add_test(NAME CEFStartupSuccessTests COMMAND CEFServiceStartupTests success)
+
     add_executable(
         ProcessDownDetectorTests
             tests/CEFSubprocess/ProcessDownDetectorTests.cpp
@@ -1186,6 +1204,7 @@ if(BUILD_AS_SHARED)
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/AE_1.7.104_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_ELEVATED_STARTUP_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_SE_RINGBUFFER_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_DLSS5_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md

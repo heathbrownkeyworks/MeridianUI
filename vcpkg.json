@@ -1,6 +1,6 @@
 {
   "name": "meridian-ui",
-  "version-semver": "1.2.0",
+  "version-semver": "1.2.1",
   "description": "UI platform for Skyrim, including CEF (Chromium Embedded Framework) integration and more",
   "homepage": "https://github.com/heathbrownkeyworks/MeridianUI",
   "license": "GPL-3.0-or-later",

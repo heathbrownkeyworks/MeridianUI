@@ -6,7 +6,11 @@ Meridian is an independent fork of [NirnLabUIPlatform](https://github.com/kkEngi
 
 ## Current status
 
-The current source version is 1.2.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
+The current source version is 1.2.1. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
+
+The runtime results below were recorded for 1.2.0. Elevated and ordinary MO2
+gameplay validation of the 1.2.1 startup fix is **NOT RUN**; see the
+[startup runtime gate](docs/testing/MERIDIAN_ELEVATED_STARTUP_RUNTIME_GATE.md).
 
 | Runtime | Status |
 | --- | --- |
@@ -17,7 +21,14 @@ The current source version is 1.2.0. The public `IUIPlatformAPI` version 1.0, `M
 
 SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing described below. Meridian's default presentation order remains unchanged for users who do not need this compatibility mode.
 
-## What's new in 1.2.0
+## What's new in 1.2.1
+
+- Preserve Skyrim's launch privileges during CEF startup, preventing Chromium
+  from relaunching the game when MO2 runs as administrator.
+- Reject further CEF initialization attempts after a failure and log that
+  Skyrim must be restarted before trying again.
+
+## Previous changes in 1.2.0
 
 - Added an opt-in compositor path for SkyrimUpscaler Build 14 and DLSS Neural Reconstruction.
 - Fixed retained RingBuffer surfaces that could flicker or update only while the mouse was moving on Skyrim SE.
@@ -185,7 +196,12 @@ The release pipeline preserves valid vendor signatures, appends the maintainer s
 
 ## Testing and issue reports
 
-The current 1.2.0 candidate passes all 48 automated tests. They cover API validation, browser security, focus ownership, input handling, frame transport, process shutdown, NIF scene behavior, runtime call-site validation, and release packaging. Runtime checklists are maintained in [`docs/testing`](docs/testing).
+The automated suite covers API validation, browser security, focus ownership,
+input handling, frame transport, process shutdown, CEF initialization failures
+and concurrent retries, NIF scene behavior, runtime call-site validation, and
+release packaging. Signed Release builds also verify every packaged DLL/EXE
+signature. Build proof and pending gameplay checks are recorded separately in
+[`docs/testing`](docs/testing).
 
 When reporting a problem, include:
 

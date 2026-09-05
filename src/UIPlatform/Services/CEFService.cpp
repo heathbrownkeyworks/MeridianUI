@@ -95,6 +95,13 @@ namespace Meridian::Services
 
         {
             std::lock_guard lifecycleLock(s_lifecycleMutex);
+            if (s_lifecycleState == LifecycleState::InitializationFailed)
+            {
+                throw std::runtime_error(fmt::format(
+                    "{}: CEF initialization previously failed, code {}; restart Skyrim before trying again",
+                    NameOf(CEFService), s_initializationExitCode));
+            }
+
             if (s_cefApp != nullptr || s_lifecycleState != LifecycleState::Uninitialized)
             {
                 throw std::runtime_error(fmt::format("{}: CEF already inited", NameOf(CEFService)));
@@ -107,8 +114,13 @@ namespace Meridian::Services
         if (!CefInitialize(args, a_cefSettings, a_cefApp, nullptr))
         {
             std::lock_guard lifecycleLock(s_lifecycleMutex);
-            s_lifecycleState = LifecycleState::Uninitialized;
-            throw std::runtime_error(fmt::format("{}: failed to initialize CEF, code {}", NameOf(CEFService), CefGetExitCode()));
+            // After a false return, CEF only permits CefGetExitCode. Never
+            // retry initialization or call CEF shutdown in this process.
+            s_lifecycleState = LifecycleState::InitializationFailed;
+            s_initializationExitCode = CefGetExitCode();
+            throw std::runtime_error(fmt::format(
+                "{}: failed to initialize CEF, code {}; restart Skyrim before trying again",
+                NameOf(CEFService), s_initializationExitCode));
         }
 
         {
@@ -137,7 +149,8 @@ namespace Meridian::Services
     {
         {
             std::lock_guard lock(s_lifecycleMutex);
-            if (s_lifecycleState == LifecycleState::Uninitialized || s_lifecycleState == LifecycleState::Stopped)
+            if (s_lifecycleState == LifecycleState::Uninitialized || s_lifecycleState == LifecycleState::Stopped ||
+                s_lifecycleState == LifecycleState::InitializationFailed)
             {
                 return true;
             }
@@ -298,7 +311,7 @@ namespace Meridian::Services
             std::lock_guard lock(s_lifecycleMutex);
             if (s_lifecycleState != LifecycleState::Running)
             {
-                spdlog::warn("CEFService::CreateBrowser: rejected because CEF is shutting down");
+                spdlog::warn("CEFService::CreateBrowser: rejected because CEF is not running");
                 return false;
             }
 

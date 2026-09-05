@@ -35,6 +35,13 @@ namespace Meridian::Services
         }
         m_logger = a_logger;
 
+        // Reject retries before settings providers can construct CEF values.
+        if (CEFService::GetLifecycleState() == CEFService::LifecycleState::InitializationFailed)
+        {
+            m_logger->error("{}: CEF initialization previously failed; restart Skyrim before trying again", NameOf(UIPlatformService));
+            return false;
+        }
+
         if (a_settingsProvider == nullptr)
         {
             m_logger->error("{}: has null {}", NameOf(UIPlatformService), NameOf(a_settingsProvider));

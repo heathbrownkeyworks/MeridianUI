@@ -22,6 +22,7 @@ namespace Meridian::Services
             ShuttingDown,
             Stopped,
             Failed,
+            InitializationFailed,
         };
 
         enum class BrowserCreationDisposition : std::uint8_t
@@ -47,6 +48,7 @@ namespace Meridian::Services
         static inline std::mutex s_lifecycleMutex;
         static inline std::condition_variable s_lifecycleCondition;
         static inline LifecycleState s_lifecycleState = LifecycleState::Uninitialized;
+        static inline int s_initializationExitCode = 0;
         static inline std::thread::id s_initializeThreadId{};
         static inline std::unordered_map<const CefClient*, ClientState> s_clients;
         static inline bool s_drainBarrierPosted = false;

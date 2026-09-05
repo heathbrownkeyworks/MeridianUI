@@ -8,11 +8,11 @@ namespace Meridian::UI::LibVersion
 {
     inline constexpr std::uint32_t MAJOR = 1;
     inline constexpr std::uint32_t MINOR = 2;
-    inline constexpr std::uint32_t PATCH = 0;
+    inline constexpr std::uint32_t PATCH = 1;
     inline constexpr auto PROJECT_NAME = "MeridianUI";
 
     inline constexpr auto MAJOR_MULT = 100000;
-    inline constexpr auto AS_STRING = "1.2.0";
+    inline constexpr auto AS_STRING = "1.2.1";
     inline constexpr std::uint32_t AS_INT = (static_cast<std::uint32_t>(MAJOR * MAJOR_MULT + MINOR));
 	
     inline std::uint32_t GetMajorVersion(std::uint32_t a_version)
