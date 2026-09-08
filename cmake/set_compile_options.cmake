@@ -80,3 +80,12 @@ function(set_external_project_options target)
         )
     endif()
 endfunction()
+
+# Apply LTO flags (/GL compile + /LTCG link) to a specific target for Release builds.
+# Call this after defining each target that should use link-time optimization.
+function(enable_lto_for_target target)
+    if(MSVC AND ENABLE_LTO)
+        target_compile_options(${target} PRIVATE $<$<CONFIG:Release>:/GL>)
+        target_link_options(${target} PRIVATE $<$<CONFIG:Release>:/LTCG>)
+    endif()
+endfunction()

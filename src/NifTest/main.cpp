@@ -939,14 +939,14 @@ namespace
                 return RE::BSEventNotifyControl::kContinue;
             }
             auto* keyboard = RE::BSInputDeviceManager::GetSingleton()->GetKeyboard();
-            const auto* keyState = keyboard != nullptr ? keyboard->curState : nullptr;
-            const auto stateSize = keyboard != nullptr ? sizeof(keyboard->curState) : 0;
+            const auto* keyState = keyboard != nullptr ? keyboard->GetRuntimeData().curState : nullptr;
+            const auto stateSize = keyboard != nullptr ? sizeof(keyboard->GetRuntimeData().curState) : 0;
             for (auto* event = *a_events; event != nullptr; event = event->next)
             {
                 auto* button = event->AsButtonEvent();
                 if (button != nullptr && button->GetDevice() == RE::INPUT_DEVICE::kKeyboard &&
                     Meridian::NifTest::IsToggleHotkey(
-                        button->idCode, button->IsDown(), keyState, stateSize))
+                        button->GetIDCode(), button->IsDown(), keyState, stateSize))
                 {
                     SetTestVisible(!State().testVisible);
                     break;

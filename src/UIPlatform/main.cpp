@@ -38,7 +38,7 @@ void InitDefaultLog()
     log->flush_on(level);
 
     spdlog::set_default_logger(std::move(log));
-    spdlog::set_pattern("[%T.%e] [%^%l%$] : %v"s);
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
 }
 
 void InitCefSubprocessLog()
@@ -61,7 +61,7 @@ void InitCefSubprocessLog()
     auto log = std::make_shared<spdlog::logger>(NL_UI_SUBPROC_NAME, std::move(sink));
     log->set_level(level);
     log->flush_on(level);
-    log->set_pattern("[%T.%e] [%^%l%$] : %v"s);
+    log->set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
 
     spdlog::register_logger(std::move(log));
 }

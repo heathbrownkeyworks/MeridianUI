@@ -313,10 +313,10 @@ namespace Meridian::Converters
                                                               1.0f);
         }
 
-        m_fakeAltTabButtonEvent->idCode = RE::BSKeyboardDevice::Keys::kLeftAlt;
+        m_fakeAltTabButtonEvent->SetIDCode(RE::BSKeyboardDevice::Keys::kLeftAlt);
         ProcessButton(m_fakeAltTabButtonEvent);
 
-        m_fakeAltTabButtonEvent->idCode = RE::BSKeyboardDevice::Keys::kTab;
+        m_fakeAltTabButtonEvent->SetIDCode(RE::BSKeyboardDevice::Keys::kTab);
         ProcessButton(m_fakeAltTabButtonEvent);
         ReleasePressedKeys();
     }

@@ -347,8 +347,8 @@ namespace Meridian::CEF
         }
 
         const auto keyboard = RE::BSInputDeviceManager::GetSingleton()->GetKeyboard();
-        const std::uint8_t* keyboardState = keyboard == nullptr ? nullptr : keyboard->curState;
-        const auto stateSize = keyboard == nullptr ? 0 : sizeof(keyboard->curState);
+        const std::uint8_t* keyboardState = keyboard == nullptr ? nullptr : keyboard->GetRuntimeData().curState;
+        const auto stateSize = keyboard == nullptr ? 0 : sizeof(keyboard->GetRuntimeData().curState);
 
         bool fired = false;
         if (Meridian::Common::ChordSatisfied(m_toggleFocusKeyCode1, m_toggleFocusKeyCode2, keyboardState, stateSize))
@@ -486,8 +486,8 @@ namespace Meridian::CEF
 
     void __cdecl DefaultBrowser::ToggleBrowserVisibleByKeys(const std::uint32_t a_keyCode1, const std::uint32_t a_keyCode2)
     {
-        m_toggleVisibleKeyCode1 = a_keyCode1 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->curState) ? a_keyCode1 : 0;
-        m_toggleVisibleKeyCode2 = a_keyCode2 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->curState) ? a_keyCode2 : 0;
+        m_toggleVisibleKeyCode1 = a_keyCode1 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->GetRuntimeData().curState) ? a_keyCode1 : 0;
+        m_toggleVisibleKeyCode2 = a_keyCode2 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->GetRuntimeData().curState) ? a_keyCode2 : 0;
     }
 
     void DefaultBrowser::OnFocusGranted()
@@ -653,8 +653,8 @@ namespace Meridian::CEF
 
     void __cdecl DefaultBrowser::ToggleBrowserFocusByKeys(const std::uint32_t a_keyCode1, const std::uint32_t a_keyCode2)
     {
-        m_toggleFocusKeyCode1 = a_keyCode1 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->curState) ? a_keyCode1 : 0;
-        m_toggleFocusKeyCode2 = a_keyCode2 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->curState) ? a_keyCode2 : 0;
+        m_toggleFocusKeyCode1 = a_keyCode1 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->GetRuntimeData().curState) ? a_keyCode1 : 0;
+        m_toggleFocusKeyCode2 = a_keyCode2 < sizeof(RE::BSInputDeviceManager::GetSingleton()->GetKeyboard()->GetRuntimeData().curState) ? a_keyCode2 : 0;
     }
 
     void __cdecl DefaultBrowser::LoadBrowserURL(const char* a_url, bool a_clearJSFunctions)
@@ -837,7 +837,10 @@ namespace Meridian::CEF
         auto cursor = RE::UI::GetSingleton()->GetMenu<RE::CursorMenu>(RE::CursorMenu::MENU_NAME);
         if (cursor.get())
         {
-            cursor->ProcessMouseMove(a_event);
+            if (auto* handler = cursor->AsMenuEventHandler())
+            {
+                handler->ProcessMouseMove(a_event);
+            }
         }
 
         const auto menuCursor = RE::MenuCursor::GetSingleton();

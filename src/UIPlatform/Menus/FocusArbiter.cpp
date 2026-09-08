@@ -60,8 +60,8 @@ namespace Meridian::Menus
 
         const auto inputManager = RE::BSInputDeviceManager::GetSingleton();
         const auto keyboard = inputManager != nullptr ? inputManager->GetKeyboard() : nullptr;
-        const auto* keyboardState = keyboard != nullptr ? keyboard->curState : nullptr;
-        const auto keyboardStateSize = keyboard != nullptr ? sizeof(keyboard->curState) : 0;
+        const auto* keyboardState = keyboard != nullptr ? keyboard->GetRuntimeData().curState : nullptr;
+        const auto keyboardStateSize = keyboard != nullptr ? sizeof(keyboard->GetRuntimeData().curState) : 0;
         const auto generation = m_sessionState.Begin(running, keyboardState, keyboardStateSize);
         if (running.has_value())
         {

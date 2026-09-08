@@ -1,9 +1,9 @@
-set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_141.0.11+g7e73ac4+chromium-141.0.7390.123_windows64.tar.bz2")
+set(CEF_URL "https://cef-builds.spotifycdn.com/cef_binary_152.0.6%2Bg708dc14%2Bchromium-152.0.7977.83_windows64.tar.bz2")
 
 vcpkg_download_distfile(ARCHIVE
     URLS ${CEF_URL}
-    FILENAME "cef141.tar.bz2"
-    SHA512 f6e6a658b8dc41b0be3f0c5f9287cab408a9e54bdf141b8497391cf0154f070ff49776b6e11e7aa4a5774930c50380008615c5f30f2a8a5a8bceca94cc367b80
+    FILENAME "cef152.tar.bz2"
+    SHA512 abe1dba41af55705577a915457ef942ee8b8413e9647ce94308938fabb0b0334523f1af3810450f5852ae0e94a563812f711ac61a2cf6fbcc837f954b315214d
 )
 
 vcpkg_extract_source_archive_ex(

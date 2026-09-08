@@ -49,8 +49,6 @@ set(packages
     rapidcsv
     simpleini
     spdlog
-    toml11
-    xbyak
 )
 foreach(package IN LISTS packages)
     set(copyright_file "${VCPKG_LICENSE_ROOT}/${package}/copyright")

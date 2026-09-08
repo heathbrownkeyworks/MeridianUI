@@ -41,10 +41,10 @@ namespace Meridian::Services
         if (const auto buttonEvent = inputEvent->AsButtonEvent();
             buttonEvent &&
             buttonEvent->IsDown() &&
-            (buttonEvent->idCode == RE::BSKeyboardDevice::Keys::kLeftShift || buttonEvent->idCode == RE::BSKeyboardDevice::Keys::kLeftAlt || buttonEvent->idCode == RE::BSKeyboardDevice::Keys::kLeftControl))
+            (buttonEvent->GetIDCode() == RE::BSKeyboardDevice::Keys::kLeftShift || buttonEvent->GetIDCode() == RE::BSKeyboardDevice::Keys::kLeftAlt || buttonEvent->GetIDCode() == RE::BSKeyboardDevice::Keys::kLeftControl))
         {
             const auto kb = RE::BSInputDeviceManager::GetSingleton()->GetKeyboard();
-            const std::uint8_t* kbState = kb == nullptr ? nullptr : kb->curState;
+            const std::uint8_t* kbState = kb == nullptr ? nullptr : kb->GetRuntimeData().curState;
             if (kbState != nullptr && (kbState[RE::BSKeyboardDevice::Keys::kLeftShift] & 0x80) != 0 &&
                 ((kbState[RE::BSKeyboardDevice::Keys::kLeftControl] & 0x80) != 0 ||
                  (kbState[RE::BSKeyboardDevice::Keys::kLeftAlt] & 0x80) != 0))

@@ -44,7 +44,6 @@ set(required_release_files
     "${ROOT}/MeridianUI/licenses/cef-prebuilt.txt"
     "${ROOT}/MeridianUI/licenses/commonlibsse-ng.txt"
     "${ROOT}/MeridianUI/licenses/meridianui-api-and-nirnlab-mit.txt"
-    "${ROOT}/MeridianUI/licenses/toml11.txt"
 )
 foreach(required_file IN LISTS required_release_files)
     if(NOT EXISTS "${required_file}")

@@ -556,13 +556,12 @@ namespace Meridian::Render::NifPreview
                 return ShapeResult::Unsupported;
             }
             const auto* skinData = a_skinInstance->skinData.get();
-            const auto boneCount = static_cast<std::size_t>(skinData->bones);
+            const auto boneCount = static_cast<std::size_t>(skinData->GetBoneCount());
             if (boneCount == 0)
             {
                 return ShapeResult::Unsupported;
             }
-            if (boneCount > MAX_SKIN_BONES || skinData->boneData == nullptr ||
-                a_skinInstance->bones == nullptr)
+            if (boneCount > MAX_SKIN_BONES || a_skinInstance->bones == nullptr)
             {
                 return ShapeResult::Malformed;
             }
@@ -571,7 +570,7 @@ namespace Meridian::Render::NifPreview
             for (std::size_t boneIndex = 0; boneIndex < boneCount; ++boneIndex)
             {
                 const auto skinToBone =
-                    ToAffineTransform(skinData->boneData[boneIndex].skinToBone);
+                    ToAffineTransform(skinData->GetBoneDataSkinToBone(static_cast<std::uint32_t>(boneIndex)));
                 a_bones[boneIndex].skinToBone = skinToBone;
                 auto* boneObject = a_skinInstance->bones[boneIndex];
                 const auto transform = a_transforms.find(boneObject);

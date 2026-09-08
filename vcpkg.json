@@ -6,19 +6,17 @@
   "license": "GPL-3.0-or-later",
   "supports": "windows & x64",
   "dependencies": [
-    {
-      "name": "vcpkg-cmake-config",
-      "host": true
-    },
     "cef-prebuilt",
-    {
-      "name": "directxtk",
-      "platform": "windows"
-    },
+    "directxtk",
+    "directx-dxc",
     "palsigslot",
-    "spdlog",
+    "fmt",
     "commonlibsse-ng",
     "nlohmann-json",
-    "simpleini"
+    "simpleini",
+    {
+      "name": "spdlog",
+      "features": ["wchar"]
+    }
   ]
 }

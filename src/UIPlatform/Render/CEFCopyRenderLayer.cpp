@@ -133,7 +133,7 @@ namespace Meridian::Render
         if (FAILED(hr))
         {
             _com_error err(hr);
-            LPCTSTR errMsg = err.ErrorMessage();
+            const std::string errMsg = NarrowErrorMessage(err.ErrorMessage());
             spdlog::error("OpenSharedResource1: unexpected HRESULT {:#X}: {}", static_cast<unsigned long>(hr), errMsg);
             return;
         }

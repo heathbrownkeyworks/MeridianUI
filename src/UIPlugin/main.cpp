@@ -68,7 +68,7 @@ void InitDefaultLog()
     log->flush_on(level);
 
     spdlog::set_default_logger(std::move(log));
-    spdlog::set_pattern("[%T.%e] [%^%l%$] : %v"s);
+    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
     s_loggerInited = true;
 }
 
