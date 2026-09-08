@@ -34,3 +34,5 @@ signing/metadata.json
 *.pem
 *.pfx
 *.p12
+Build_Config_Local.ps1
+/utilities
