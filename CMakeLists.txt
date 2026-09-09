@@ -9,7 +9,7 @@ option(ENABLE_LTO "Enable link-time optimization for Release platform libraries"
 
 # Version
 set(LIB_MAJOR_VERSION 1)
-set(LIB_MINOR_VERSION 3)
+set(LIB_MINOR_VERSION 4)
 set(LIB_PATCH_VERSION 0)
 set(API_MAJOR_VERSION 1)
 set(API_MINOR_VERSION 0)
@@ -170,6 +170,7 @@ if(BUILD_AS_SHARED)
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_1.4.0_RUNTIME_GATE.md
             ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
         COMMENT "Staging Meridian SDK, guides, and license notices..."
         VERBATIM

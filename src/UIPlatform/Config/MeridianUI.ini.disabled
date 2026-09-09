@@ -5,7 +5,8 @@
 ; (INI wins). Every entry is optional; commented entries keep defaults.
 
 [General]
-; Renderer for browser surfaces: RingBuffer (default) or SyncCopy.
+; Renderer for SharedTexture browser transport: RingBuffer (default) or SyncCopy.
+; CpuUpload transport ignores this selection.
 ;RendererType=RingBuffer
 
 ; Allow language switching in native game menus (console, race menu, ...).
@@ -18,6 +19,17 @@
 ;AllowRemoteContent=false
 
 [Compatibility]
+; Browser frame transport, selected once at startup. Restart Skyrim to change.
+; Auto selects CpuUpload for a detected DXVK device on Windows. Native D3D11
+; and Wine/Proton retain SharedTexture. Explicit values override detection.
+; Valid values: Auto, SharedTexture, CpuUpload. Default: Auto
+;BrowserTransport=Auto
+
+; Maximum browser paint rate in CpuUpload mode, 1-60. Default: 30
+; A mod's lower requested frame rate still applies. Skyrim's frame rate is not
+; limited. CPU uploads cost additional CPU work and memory bandwidth.
+;CpuUploadFrameRate=30
+
 ; Controls when Meridian composites its surfaces around Skyrim's renderer-end
 ; call. AfterRendererEnd is the shipping default. SkyrimUpscaler Build 14 with
 ; DLSS Neural Reconstruction may replace or consume the game backbuffer during

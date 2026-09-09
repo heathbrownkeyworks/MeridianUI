@@ -1,4 +1,6 @@
 #include "RenderHost.h"
+#include "GraphicsBackend.h"
+#include "Config/IniConfig.h"
 
 #include "Menus/FocusArbiter.h"
 #include "Render/CursorRenderer.h"
@@ -94,17 +96,49 @@ namespace Meridian::Render
         m_renderData.width = textDesc.Width;
         m_renderData.height = textDesc.Height;
 
-        // Private device for the ring-buffer frame transport. Failure is
-        // non-fatal: clients fall back to the SyncCopy renderer.
-        auto platformDevice = std::make_shared<Meridian::Render::RenderDevice>();
-        if (platformDevice->Create(m_gameDevice.Get()))
+        // Resolve before CEF creates any browsers. CPU paint must use the same
+        // transport in browser settings and in the client render layer.
+        const auto& overrides = Config::LoadIniOverrides();
+        const bool dxvk = IsDxvkDevice(m_gameDevice.Get());
+        const bool wine = IsWine();
+        const auto requestedTransport = overrides.browserTransport.value_or(BrowserTransport::Auto);
+        m_renderData.browserTransport = ResolveBrowserTransport(requestedTransport, dxvk, wine);
+        m_renderData.cpuUploadFrameRate = overrides.cpuUploadFrameRate.value_or(30);
+        m_logger->info("RenderHost: browser transport={} requested={} DXVK={} Wine={} CPU frame cap={}",
+            ToString(m_renderData.browserTransport), ToString(requestedTransport), dxvk, wine, m_renderData.cpuUploadFrameRate);
+        Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice;
+        Microsoft::WRL::ComPtr<IDXGIAdapter> adapter;
+        DXGI_ADAPTER_DESC adapterDesc{};
+        if (SUCCEEDED(m_gameDevice.As(&dxgiDevice)) && SUCCEEDED(dxgiDevice->GetAdapter(adapter.GetAddressOf())) &&
+            SUCCEEDED(adapter->GetDesc(&adapterDesc)))
+            m_logger->info("RenderHost: adapter={} vendor={:#06x} device={:#06x} LUID={:08x}:{:08x}",
+                std::filesystem::path(adapterDesc.Description).string(), adapterDesc.VendorId, adapterDesc.DeviceId,
+                std::uint32_t(adapterDesc.AdapterLuid.HighPart), adapterDesc.AdapterLuid.LowPart);
+        // The COM vtable belongs to the actual device implementation, even when
+        // another graphics wrapper was loaded elsewhere in the process.
+        HMODULE deviceModule = nullptr;
+        const auto queryInterface = (*reinterpret_cast<void***>(m_gameDevice.Get()))[0];
+        if (::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                reinterpret_cast<LPCWSTR>(queryInterface), &deviceModule))
         {
-            m_renderData.platformDevice = std::move(platformDevice);
+            wchar_t modulePath[MAX_PATH]{};
+            const auto length = ::GetModuleFileNameW(deviceModule, modulePath, MAX_PATH);
+            if (length > 0 && length < MAX_PATH)
+                m_logger->info("RenderHost: device implementation={}", std::filesystem::path(modulePath).string());
+        }
+        if (!(dxvk && !wine) || m_renderData.browserTransport == BrowserTransport::SharedTexture)
+        {
+            // Native NIF previews also use this device, even when browser CPU
+            // upload is forced. Windows DXVK's separate NIF transport is not
+            // supported yet; avoid creating an unusable device in Auto mode.
+            auto platformDevice = std::make_shared<Meridian::Render::RenderDevice>();
+            if (platformDevice->Create(m_gameDevice.Get()))
+                m_renderData.platformDevice = std::move(platformDevice);
+            else
+                m_logger->warn("{}: platform render device unavailable, ring renderer disabled", NameOf(RenderHost));
         }
         else
-        {
-            m_logger->warn("{}: platform render device unavailable, ring renderer disabled", NameOf(RenderHost));
-        }
+            m_logger->warn("RenderHost: Windows DXVK browser CPU uploads enabled; built-in NIF previews require shared-texture transport and are unavailable");
 
         // CommonLibSSE-NG's RE::BSGraphics::Renderer exposes the swap chain as
         // REX::W32::IDXGISwapChain* (its own COM-layout reimplementation), not

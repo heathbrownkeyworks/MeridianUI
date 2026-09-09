@@ -2,6 +2,7 @@
 
 #include "Common/SpinLock.h"
 #include "RenderDevice.h"
+#include "BrowserTransport.h"
 #include <directxtk/CommonStates.h>
 #include <directxtk/SimpleMath.h>
 #include <directxtk/SpriteBatch.h>
@@ -12,6 +13,8 @@ namespace Meridian::Render
 {
     struct RenderData
     {
+        BrowserTransport browserTransport = BrowserTransport::SharedTexture;
+        int cpuUploadFrameRate = 30;
         ID3D11Device* device = nullptr;
         ID3D11DeviceContext3* deviceContext = nullptr;
         std::shared_ptr<::DirectX::CommonStates> commonStates = nullptr;

@@ -42,6 +42,7 @@ set(required_release_files
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md"
+    "${ROOT}/MeridianUI/docs/testing/MERIDIAN_1.4.0_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/licenses/cef-prebuilt.txt"
     "${ROOT}/MeridianUI/licenses/commonlibsse-ng.txt"
     "${ROOT}/MeridianUI/licenses/meridianui-api-and-nirnlab-mit.txt"

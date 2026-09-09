@@ -6,11 +6,11 @@ Meridian is an independent fork of [NirnLabUIPlatform](https://github.com/kkEngi
 
 ## Current status
 
-The current source version is 1.3.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
+The current source version is 1.4.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
 
 The runtime results below were recorded for 1.2.0. Gameplay validation of the
-1.3.0 dependency update is **NOT RUN**; see the
-[1.3.0 runtime gate](docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md).
+1.4.0 DXVK candidate and its 1.3.0 dependency baseline is **NOT RUN**; see the
+[1.4.0 runtime gate](docs/testing/MERIDIAN_1.4.0_RUNTIME_GATE.md).
 
 | Runtime | Status |
 | --- | --- |
@@ -21,7 +21,23 @@ The runtime results below were recorded for 1.2.0. Gameplay validation of the
 
 SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing described below. Meridian's default presentation order remains unchanged for users who do not need this compatibility mode.
 
-## What's new in 1.3.0
+## What's new in 1.4.0
+
+- Added automatic CPU browser frame uploads for DXVK on Windows.
+- Added transport and browser frame-rate overrides for compatibility testing.
+- Added rendering diagnostics and tests for transparency, updates, resize, and cleanup.
+- Existing consumer mods continue using the same public APIs.
+
+In Auto mode, Windows DXVK uses CPU browser uploads at up to 30 paints per second.
+Native D3D11 and Wine/Proton keep their existing shared-texture selection. Optional
+`[Compatibility] BrowserTransport=Auto|SharedTexture|CpuUpload` and
+`CpuUploadFrameRate=1..60` INI settings take effect after restarting Skyrim.
+CPU uploads add CPU work and memory bandwidth. This candidate covers browser
+interfaces; Meridian's built-in NIF preview APIs still require shared textures
+and are unavailable on Windows DXVK. Native D3D11 previews remain available,
+including when browser CPU uploads are forced.
+
+## Previous changes in 1.3.0
 
 - Updated Chromium Embedded Framework to 152.0.6 and CommonLibSSE-NG to 7.4.0.
 - Split the build configuration into smaller modules and added repeatable Windows build presets.
@@ -52,6 +68,7 @@ build refactor, and API adaptations in [their contribution](https://github.com/l
 
 - Off-screen Chromium rendering integrated with Skyrim's Direct3D 11 presentation path
 - Triple-buffered shared-texture RingBuffer transport with automatic SyncCopy fallback
+- CPU browser uploads for Windows DXVK, with bounded retained frames and partial updates
 - Multiple independent browser views
 - Shared keyboard, mouse, cursor, focus, pause, and text-entry ownership across consumer mods
 - Focused input isolation that prevents duplicate delivery and interference from competing hooks

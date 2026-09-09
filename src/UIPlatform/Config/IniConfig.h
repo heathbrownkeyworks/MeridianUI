@@ -4,6 +4,7 @@
 #include <string>
 
 #include "MeridianUIAPI/Settings.h"
+#include "Render/BrowserTransport.h"
 
 namespace Meridian::Config
 {
@@ -19,6 +20,8 @@ namespace Meridian::Config
     {
         std::optional<Meridian::UI::RendererType> rendererType;
         std::optional<CompositorTiming> compositorTiming;
+        std::optional<Meridian::Render::BrowserTransport> browserTransport;
+        std::optional<int> cpuUploadFrameRate;
         std::optional<bool> remoteDebuggingEnabled;
         std::optional<int> remoteDebuggingPort;
         std::optional<bool> nativeMenuLangSwitching;

@@ -1,4 +1,5 @@
 #include "Render/RendererSelection.h"
+#include "Render/BrowserTransport.h"
 
 #include <iostream>
 
@@ -20,6 +21,14 @@ int main()
 {
     using Meridian::Render::ResolveBrowserRenderer;
     using Meridian::UI::RendererType;
+    using namespace Meridian::Render;
+    Expect(ResolveBrowserTransport(BrowserTransport::Auto, true, false) == BrowserTransport::CpuUpload, "Windows DXVK selects CPU uploads");
+    Expect(ResolveBrowserTransport(BrowserTransport::Auto, true, true) == BrowserTransport::SharedTexture, "Proton retains its existing shared path");
+    Expect(ResolveBrowserTransport(BrowserTransport::Auto, false, false) == BrowserTransport::SharedTexture, "ordinary D3D11 unchanged");
+    Expect(ResolveBrowserTransport(BrowserTransport::CpuUpload, false, false) == BrowserTransport::CpuUpload, "forced CPU override");
+    Expect(ResolveBrowserTransport(BrowserTransport::SharedTexture, true, false) == BrowserTransport::SharedTexture, "explicit shared override");
+    Expect(BrowserFrameRate(BrowserTransport::CpuUpload, 60, 30) == 30 && BrowserFrameRate(BrowserTransport::CpuUpload, 15, 30) == 15, "CPU cap respects slower consumer rates");
+    Expect(BrowserFrameRate(BrowserTransport::SharedTexture, 60, 30) == 60, "shared frame rates unchanged");
 
     Expect(ResolveBrowserRenderer(RendererType::RingBuffer, true, true) == RendererType::RingBuffer,
            "supported ring transport remains selected");

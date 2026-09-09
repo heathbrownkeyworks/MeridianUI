@@ -146,6 +146,24 @@ namespace Meridian::Config
             }
         }
 
+        if (const char* value = ini.GetValue("Compatibility", "BrowserTransport", nullptr))
+        {
+            using Meridian::Render::BrowserTransport;
+            if (EqualsCaseInsensitive(value, "Auto")) overrides.browserTransport = BrowserTransport::Auto;
+            else if (EqualsCaseInsensitive(value, "SharedTexture")) overrides.browserTransport = BrowserTransport::SharedTexture;
+            else if (EqualsCaseInsensitive(value, "CpuUpload")) overrides.browserTransport = BrowserTransport::CpuUpload;
+            else WarnBadValue("Compatibility.BrowserTransport");
+        }
+        if (const char* value = ini.GetValue("Compatibility", "CpuUploadFrameRate", nullptr))
+        {
+            const auto* end = value + std::strlen(value);
+            int rate = 0;
+            const auto result = std::from_chars(value, end, rate);
+            if (result.ec == std::errc{} && result.ptr == end && rate >= 1 && rate <= 60)
+                overrides.cpuUploadFrameRate = rate;
+            else WarnBadValue("Compatibility.CpuUploadFrameRate");
+        }
+
         if (const char* value = ini.GetValue("Compatibility", "CompositorTiming", nullptr))
         {
             if (EqualsCaseInsensitive(value, "AfterRendererEnd"))

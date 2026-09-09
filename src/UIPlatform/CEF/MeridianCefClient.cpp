@@ -6,6 +6,7 @@
 #include "Render/RenderHost.h"
 #include "Render/CursorRenderer.h"
 #include "Render/RendererSelection.h"
+#include "Render/CEFCpuRenderLayer.h"
 
 namespace Meridian::CEF
 {
@@ -15,6 +16,14 @@ namespace Meridian::CEF
         const auto globalSettings = a_settingsProvider->GetGlobalSettings();
         auto rendererType = globalSettings.rendererType;
         m_contentPolicy.SetAllowRemoteContent(globalSettings.allowRemoteContent);
+
+        if (Meridian::Render::RenderHost::GetSingleton().GetRenderData()->browserTransport == Meridian::Render::BrowserTransport::CpuUpload)
+        {
+            auto* layer = new Meridian::Render::CEFCpuRenderLayer(std::move(a_geometryHolder));
+            m_cefRenderLayer = CefRefPtr<Meridian::Render::IRenderLayer>(layer);
+            m_cefRenderHandler = CefRefPtr<CefRenderHandler>(layer);
+            return;
+        }
 
         if (rendererType == Meridian::UI::RendererType::RingBuffer)
         {

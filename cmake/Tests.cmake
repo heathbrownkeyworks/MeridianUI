@@ -3,6 +3,29 @@
 # already included CTest and defined the `set_compile_options()` function.
 
 if(BUILD_TESTING)
+    option(MERIDIAN_BUILD_CEF_CPU_SMOKE "Build the opt-in standalone CEF CPU upload fixture" OFF)
+    if(MERIDIAN_BUILD_CEF_CPU_SMOKE)
+        add_executable(CefCpuSmokeTests tests/UIPlatform/CefCpuSmokeTests.cpp
+            src/UIPlatform/Render/CpuTextureSurface.cpp src/UIPlatform/Render/CpuFrameBuffer.cpp)
+        target_include_directories(CefCpuSmokeTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform)
+        target_link_libraries(CefCpuSmokeTests PRIVATE cef d3d11.lib dxgi.lib)
+        set_compile_options(CefCpuSmokeTests)
+        # Deliberately not staged or registered with CTest: matching runtime DLLs
+        # and (for DXVK) a Vulkan-capable GPU must be provided by the operator.
+    endif()
+
+    add_executable(CpuFrameBufferTests tests/UIPlatform/CpuFrameBufferTests.cpp src/UIPlatform/Render/CpuFrameBuffer.cpp)
+    target_include_directories(CpuFrameBufferTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform)
+    set_compile_options(CpuFrameBufferTests)
+    add_test(NAME CpuFrameBufferTests COMMAND CpuFrameBufferTests)
+
+    add_executable(CpuTextureSurfaceTests tests/UIPlatform/CpuTextureSurfaceTests.cpp
+        src/UIPlatform/Render/CpuTextureSurface.cpp src/UIPlatform/Render/CpuFrameBuffer.cpp)
+    target_include_directories(CpuTextureSurfaceTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform)
+    target_link_libraries(CpuTextureSurfaceTests PRIVATE d3d11.lib dxgi.lib)
+    set_compile_options(CpuTextureSurfaceTests)
+    add_test(NAME CpuTextureSurfaceTests COMMAND CpuTextureSurfaceTests)
+
     add_test(
         NAME BuildReleaseScriptTests
         COMMAND powershell -NoProfile -ExecutionPolicy Bypass

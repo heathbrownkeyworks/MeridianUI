@@ -43,6 +43,7 @@ namespace Meridian::Menus
         std::shared_ptr<Meridian::Menus::LayerGeometryHolder> GetGeometryHolder() const { return m_geometryHolder; }
 
         // Meridian::Render::IRenderLayer
+        void Prepare() override;
         void Draw() override;
         void AfterDraw() override;
         void Init(Meridian::Render::RenderData* a_renderData) override;

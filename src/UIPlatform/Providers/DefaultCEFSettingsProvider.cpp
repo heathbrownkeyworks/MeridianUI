@@ -1,4 +1,5 @@
 #include "DefaultCEFSettingsProvider.h"
+#include "Render/RenderHost.h"
 
 namespace Meridian::Providers
 {
@@ -49,7 +50,8 @@ namespace Meridian::Providers
         CefBrowserSettingsTraits::init(&browserSettings);
         CefBrowserSettingsTraits::clear(&browserSettings);
 
-        browserSettings.windowless_frame_rate = 60;
+        const auto* renderData = Render::RenderHost::GetSingleton().GetRenderData();
+        browserSettings.windowless_frame_rate = Render::BrowserFrameRate(renderData->browserTransport, 60, renderData->cpuUploadFrameRate);
         browserSettings.background_color = 0x00;
 
         return browserSettings;
@@ -69,7 +71,7 @@ namespace Meridian::Providers
         info.SetAsWindowless(nullptr);
         info.windowless_rendering_enabled = true;
         info.external_begin_frame_enabled = false;
-        info.shared_texture_enabled = true;
+        info.shared_texture_enabled = Render::RenderHost::GetSingleton().GetRenderData()->browserTransport != Render::BrowserTransport::CpuUpload;
 
         return info;
     }

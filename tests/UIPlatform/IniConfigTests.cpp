@@ -18,6 +18,16 @@ namespace
 
 int main()
 {
+    {
+        using Meridian::Render::BrowserTransport;
+        const auto cpu = Meridian::Config::ParseIni("[Compatibility]\nBrowserTransport=cpuupload\nCpuUploadFrameRate=45\n");
+        Expect(cpu.browserTransport == BrowserTransport::CpuUpload && cpu.cpuUploadFrameRate == 45, "CPU transport settings parse");
+        Expect(Meridian::Config::ParseIni("[Compatibility]\nBrowserTransport=Auto\n").browserTransport == BrowserTransport::Auto, "auto transport parses");
+        Expect(Meridian::Config::ParseIni("[Compatibility]\nBrowserTransport=SharedTexture\n").browserTransport == BrowserTransport::SharedTexture, "shared transport parses");
+        const auto bad = Meridian::Config::ParseIni("[Compatibility]\nBrowserTransport=Vulkan\nCpuUploadFrameRate=61\n");
+        Expect(!bad.browserTransport && !bad.cpuUploadFrameRate, "invalid transport and out-of-range frame rate ignored");
+        Expect(!Meridian::Config::ParseIni("[Compatibility]\nCpuUploadFrameRate=0\n").cpuUploadFrameRate, "zero frame rate rejected");
+    }
     // Full INI parses.
     {
         const auto o = Meridian::Config::ParseIni(

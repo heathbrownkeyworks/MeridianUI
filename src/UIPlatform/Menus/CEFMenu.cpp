@@ -86,6 +86,11 @@ namespace Meridian::Menus
 
 #pragma region Meridian::Render::IRenderLayer
 
+    void CEFMenu::Prepare()
+    {
+        m_cefRenderLayer->Prepare();
+    }
+
     void CEFMenu::Draw()
     {
         m_cefRenderLayer->Draw();

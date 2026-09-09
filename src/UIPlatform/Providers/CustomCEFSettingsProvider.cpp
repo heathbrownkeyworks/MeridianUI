@@ -1,4 +1,5 @@
 #include "CustomCEFSettingsProvider.h"
+#include "Render/RenderHost.h"
 
 namespace Meridian::Providers
 {
@@ -28,7 +29,8 @@ namespace Meridian::Providers
     CefBrowserSettings CustomCEFSettingsProvider::MergeAndGetCefBrowserSettings(Meridian::UI::BrowserSettings* a_settings)
     {
         auto browserSettings = m_defaultSettings->MergeAndGetCefBrowserSettings(a_settings);
-        browserSettings.windowless_frame_rate = a_settings->frameRate;
+        const auto* renderData = Render::RenderHost::GetSingleton().GetRenderData();
+        browserSettings.windowless_frame_rate = Render::BrowserFrameRate(renderData->browserTransport, a_settings->frameRate, renderData->cpuUploadFrameRate);
 
         return browserSettings;
     }
