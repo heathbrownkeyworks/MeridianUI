@@ -3,6 +3,19 @@
 # already included CTest and defined the `set_compile_options()` function.
 
 if(BUILD_TESTING)
+    add_executable(NifPreviewGpuTests tests/UIPlatform/NifPreviewGpuTests.cpp
+        src/UIPlatform/Render/NifPreviewRenderer.cpp src/UIPlatform/Render/RenderDevice.cpp
+        src/UIPlatform/Render/FrameTransport.cpp)
+    target_include_directories(NifPreviewGpuTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/CEFSubprocess
+        ${CMAKE_CURRENT_BINARY_DIR}/include ${MERIDIAN_NIF_SHADER_OUTPUT_DIR})
+    target_link_libraries(NifPreviewGpuTests PRIVATE CommonLibSSE::CommonLibSSE Microsoft::DirectXTK
+        cef nlohmann_json::nlohmann_json d3d11.lib dxgi.lib dxguid.lib)
+    target_precompile_headers(NifPreviewGpuTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform/PCH.h")
+    add_dependencies(NifPreviewGpuTests MeridianNifMaterialShaders)
+    set_compile_options(NifPreviewGpuTests)
+    add_test(NAME NifPreviewGpuTests COMMAND NifPreviewGpuTests)
+
     option(MERIDIAN_BUILD_CEF_CPU_SMOKE "Build the opt-in standalone CEF CPU upload fixture" OFF)
     if(MERIDIAN_BUILD_CEF_CPU_SMOKE)
         add_executable(CefCpuSmokeTests tests/UIPlatform/CefCpuSmokeTests.cpp

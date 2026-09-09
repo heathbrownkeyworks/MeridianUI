@@ -36,24 +36,33 @@ inject DXVK. Keep its wrapper DLLs in the game setup prescribed by DXVK, outside
 Meridian's CEF helper directory. The helper can use native D3D11 while the game
 uses DXVK because CPU pixel transfer crosses that boundary.
 
-The built-in NIF preview APIs use a separate private device and shared-texture
-transport. They remain unavailable on Windows DXVK in this candidate and log
-that limitation. Native D3D11 keeps the private device, including when browser
-CpuUpload is forced. Consumer-defined native render layers need their own DXVK
-validation; this browser change does not establish their compatibility.
+Built-in NIF previews select `DeferredGameDevice` on Windows DXVK, independently
+of the browser transport override. Each preview records its existing material
+shaders and geometry into a deferred context on the game device. It submits that
+command list on the render thread before browser composition, with
+`ExecuteCommandList(..., TRUE)` restoring the immediate-context state. The preview
+SRV belongs to the game device and is sampled directly. There are no shared
+handles, keyed mutexes, frame copies, CPU readback, or GPU polling in this path.
+The GPU orders preview drawing before composition on the same device/context.
+
+Native D3D11 and Wine/Proton keep the existing private-device preview path,
+including when browser CpuUpload is forced. In-game tests remain required for
+both paths. Consumer-defined native render layers need their own DXVK validation.
 
 References: [DXVK shared-resource support](https://github.com/doitsujin/dxvk/wiki/Feature-support#shared-resources),
 [DXVK Windows guidance](https://github.com/doitsujin/dxvk/wiki/Windows),
 [DXVK interop interface](https://github.com/doitsujin/dxvk/blob/v3.1/src/dxgi/dxgi_interfaces.h),
 [CEF 152 paint contract](https://github.com/chromiumembedded/cef/blob/708dc140cbc3286826a8abef89dc23a44ff9ea72/include/cef_render_handler.h).
+The NIF path follows Microsoft's
+[command-list state restoration contract](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-executecommandlist).
 
 ## Standalone evidence
 
 Validated on Windows, 2026-09-09, with MSVC 19.44 / SDK 10.0.26100.0, the pinned
 CEF 152 / CommonLibSSE-NG 7.4 dependencies, DXVK 3.1 and NVIDIA RTX 4090:
 
-- Release build: **55/55 CTest passed**. Debug build, including the optional
-  standalone NIF consumer: **55/55 CTest passed**. Matching static Release and
+- Release build: **56/56 CTest passed**. Debug build, including the optional
+  standalone NIF consumer: **56/56 CTest passed**. Matching static Release and
   Debug dependencies were reused from the verified 1.3.0 dependency installation.
 - All three compiled Meridian binaries report **1.4.0.0**. Signing and deployment
   receipts are recorded with the candidate artifacts separately.
@@ -71,11 +80,26 @@ CEF 152 / CommonLibSSE-NG 7.4 dependencies, DXVK 3.1 and NVIDIA RTX 4090:
   remained after either successful run.
 - An initial fixture that put DXVK beside the CEF helper retried after GPU helper
   crashes before producing pixels. That layout is not the validated configuration.
+- `NifPreviewGpuTests` runs the production NIF renderer and compiled material
+  shaders with decoded test geometry. Native D3D11 WARP and Windows DXVK 3.1 passed
+  actual pixel readback, material tint, transparency, camera updates, resize,
+  independent previews, hide/show, clear/reload, retained texture reuse, and shutdown.
+  Viewport, scissor, topology, blend, depth, rasterizer, render target, constant
+  buffer bindings across shader stages, and a retained compositor SRV were preserved.
+  Skyrim extraction and texture-resource IO are outside this test boundary.
+  The D3D11 debug info queue was unavailable on this host, so these results are
+  based on HRESULT, pixel readback, and explicit state comparisons.
 
 To reproduce the upload test, build with `BUILD_TESTING=ON`, run
 `CpuTextureSurfaceTests`, then copy that executable plus the official x64 DXVK
 `d3d11.dll` and `dxgi.dll` into an isolated directory and run it with `--expect-dxvk`.
 Never copy test DXVK DLLs into the live mod.
+
+`NifPreviewGpuTests` is also included in ordinary CTest using WARP. To exercise
+Vulkan, copy that executable into an isolated directory with the official x64
+DXVK `d3d11.dll` and `dxgi.dll`, then run `NifPreviewGpuTests --expect-dxvk`.
+The fixture substitutes Skyrim IO with functions that fail if called; it tests
+the production GPU renderer using already-decoded geometry, not NIF loading in Skyrim.
 
 For real CEF smoke testing, additionally configure `MERIDIAN_BUILD_CEF_CPU_SMOKE=ON`
 and build `CefCpuSmokeTests`. Copy its matching CEF runtime DLLs/resources/locales
@@ -95,7 +119,7 @@ Record exact Skyrim/SKSE/Meridian/DXVK versions and GPU/driver with each result.
 | Windows DXVK, Auto | NOT RUN | Log selects CpuUpload with correct device module/adapter; open Horde and Tailor |
 | Forced CpuUpload on native D3D11 | NOT RUN | Compare the same menus, transparency, popups, and animation |
 | Multiple menus, hide/reopen, geometry/resize | NOT RUN | No stale frames, stretched popup, or cross-view corruption |
-| Built-in NIF previews under Windows DXVK | UNSUPPORTED | Separate NIF transport work is required |
+| Built-in NIF previews under Windows DXVK | NOT RUN | Log selects DeferredGameDevice; test rigid/skinned/weighted geometry, materials, and live-reference previews |
 | Native D3D11 NIF previews with forced CpuUpload | NOT RUN | Browser transport selection must not disable the private preview device |
 | SE 1.5.97 and AE | NOT RUN | Record separately; earlier releases do not validate this candidate |
 | Ordinary and elevated MO2 | NOT RUN | Menus open without code 38 or startup retry |

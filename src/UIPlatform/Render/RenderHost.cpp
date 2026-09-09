@@ -101,6 +101,7 @@ namespace Meridian::Render
         const auto& overrides = Config::LoadIniOverrides();
         const bool dxvk = IsDxvkDevice(m_gameDevice.Get());
         const bool wine = IsWine();
+        m_renderData.gameDeviceNifRendering = dxvk && !wine;
         const auto requestedTransport = overrides.browserTransport.value_or(BrowserTransport::Auto);
         m_renderData.browserTransport = ResolveBrowserTransport(requestedTransport, dxvk, wine);
         m_renderData.cpuUploadFrameRate = overrides.cpuUploadFrameRate.value_or(30);
@@ -129,16 +130,15 @@ namespace Meridian::Render
         if (!(dxvk && !wine) || m_renderData.browserTransport == BrowserTransport::SharedTexture)
         {
             // Native NIF previews also use this device, even when browser CPU
-            // upload is forced. Windows DXVK's separate NIF transport is not
-            // supported yet; avoid creating an unusable device in Auto mode.
+            // upload is forced. Windows DXVK previews use the game device.
             auto platformDevice = std::make_shared<Meridian::Render::RenderDevice>();
             if (platformDevice->Create(m_gameDevice.Get()))
                 m_renderData.platformDevice = std::move(platformDevice);
             else
                 m_logger->warn("{}: platform render device unavailable, ring renderer disabled", NameOf(RenderHost));
         }
-        else
-            m_logger->warn("RenderHost: Windows DXVK browser CPU uploads enabled; built-in NIF previews require shared-texture transport and are unavailable");
+        m_logger->info("RenderHost: NIF rendering={}",
+            m_renderData.gameDeviceNifRendering ? "DeferredGameDevice" : "SharedTexture");
 
         // CommonLibSSE-NG's RE::BSGraphics::Renderer exposes the swap chain as
         // REX::W32::IDXGISwapChain* (its own COM-layout reimplementation), not

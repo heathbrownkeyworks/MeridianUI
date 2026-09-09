@@ -24,6 +24,7 @@ SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing de
 ## What's new in 1.4.0
 
 - Added automatic CPU browser frame uploads for DXVK on Windows.
+- Added GPU rendering for built-in NIF previews on Windows DXVK.
 - Added transport and browser frame-rate overrides for compatibility testing.
 - Added rendering diagnostics and tests for transparency, updates, resize, and cleanup.
 - Existing consumer mods continue using the same public APIs.
@@ -32,10 +33,11 @@ In Auto mode, Windows DXVK uses CPU browser uploads at up to 30 paints per secon
 Native D3D11 and Wine/Proton keep their existing shared-texture selection. Optional
 `[Compatibility] BrowserTransport=Auto|SharedTexture|CpuUpload` and
 `CpuUploadFrameRate=1..60` INI settings take effect after restarting Skyrim.
-CPU uploads add CPU work and memory bandwidth. This candidate covers browser
-interfaces; Meridian's built-in NIF preview APIs still require shared textures
-and are unavailable on Windows DXVK. Native D3D11 previews remain available,
-including when browser CPU uploads are forced.
+CPU browser uploads add CPU work and memory bandwidth. Built-in NIF previews use
+a separate GPU path on Windows DXVK: preview commands run on the game device,
+with the game's rendering state preserved. They require no shared handles or CPU
+frame copies. Native D3D11 keeps its existing private-device preview path,
+including when browser CPU uploads are forced. In-game validation is pending.
 
 ## Previous changes in 1.3.0
 

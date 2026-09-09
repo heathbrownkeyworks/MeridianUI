@@ -5,13 +5,14 @@ All notable MeridianUI changes are recorded here.
 ## 1.4.0 - Candidate
 
 - Added automatic browser rendering compatibility for DXVK on Windows.
+- Added Windows DXVK support for built-in NIF previews while preserving game rendering state.
 - Added optional transport selection and a browser frame-rate limit for CPU uploads.
 - Improved graphics diagnostics and coverage for transparency, resize, and cleanup.
 - Kept existing mod APIs, input behavior, and security settings.
 
 Standalone D3D11, DXVK, and CEF checks passed. Skyrim validation remains **NOT RUN**;
 see the [1.4.0 runtime gate](docs/testing/MERIDIAN_1.4.0_RUNTIME_GATE.md).
-Built-in NIF previews remain unsupported on Windows DXVK in this browser candidate.
+Production NIF renderer tests passed on native D3D11 and DXVK; in-game preview validation remains pending.
 
 ## 1.3.0 - Candidate
 

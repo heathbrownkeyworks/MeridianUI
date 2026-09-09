@@ -123,10 +123,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CEF.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CEFSubprocess.cmake)
 
 # ============================ Tests ============================
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NifMaterialShaders.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Tests.cmake)
 
 # ============================ UIPlatform ============================
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NifMaterialShaders.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/UIPlatform.cmake)
 
 # ============================ UIPlugin ============================

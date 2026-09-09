@@ -75,6 +75,9 @@ namespace Meridian::Render::NifPreview
         Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetSurfaceView();
 
     private:
+        // GPU integration tests supply already-extracted geometry; Skyrim IO is
+        // kept outside that standalone test boundary.
+        friend struct NifPreviewRendererTestAccess;
         struct PendingSceneBatch
         {
             std::uint64_t generation = 0;
@@ -149,6 +152,7 @@ namespace Meridian::Render::NifPreview
         std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>
             m_textureCache;
         Microsoft::WRL::ComPtr<ID3D11Texture2D> m_colorTexture;
+        Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_colorView;
         Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView;
         Microsoft::WRL::ComPtr<ID3D11Texture2D> m_depthTexture;
         Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_depthStencilView;

@@ -87,6 +87,7 @@ namespace Meridian::Render::NifPreview
         m_depthStencilView.Reset();
         m_depthTexture.Reset();
         m_renderTargetView.Reset();
+        m_colorView.Reset();
         m_colorTexture.Reset();
         m_inputLayout.Reset();
         m_vertexShader.Reset();
@@ -596,6 +597,9 @@ namespace Meridian::Render::NifPreview
 
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NifPreviewRenderer::GetSurfaceView()
     {
+        if (m_isShuttingDown.load(std::memory_order_acquire) ||
+            m_status.load(std::memory_order_acquire) != Meridian::UI::NifView::Status::Ready) return nullptr;
+        if (m_platformDevice != nullptr && m_platformDevice->IsDeferred()) return m_colorView;
         return m_transportReady ? m_transport.ConsumeSRV() : nullptr;
     }
 
@@ -613,7 +617,12 @@ namespace Meridian::Render::NifPreview
         }
         m_graphicsInitializationAttempted = true;
 
-        const auto platformDevice = a_renderData.platformDevice;
+        auto platformDevice = a_renderData.platformDevice;
+        if (a_renderData.gameDeviceNifRendering)
+        {
+            platformDevice = std::make_shared<RenderDevice>();
+            if (!platformDevice->CreateDeferred(a_renderData.device)) return false;
+        }
         if (platformDevice == nullptr || !platformDevice->IsValid() ||
             a_renderData.device == nullptr || a_width == 0 || a_height == 0)
         {
@@ -704,7 +713,8 @@ namespace Meridian::Render::NifPreview
                 return false;
             }
 
-            if (!m_transport.Initialize(*platformDevice, a_renderData.device, static_cast<int>(a_width), static_cast<int>(a_height)))
+            if (!platformDevice->IsDeferred() &&
+                !m_transport.Initialize(*platformDevice, a_renderData.device, static_cast<int>(a_width), static_cast<int>(a_height)))
             {
                 spdlog::error("{}: cross-device frame transport initialization failed", NameOf(NifPreviewRenderer));
                 return false;
@@ -948,11 +958,15 @@ namespace Meridian::Render::NifPreview
 
         Microsoft::WRL::ComPtr<ID3D11Texture2D> colorTexture;
         Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
+        Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> colorView;
         if (FAILED(a_device->CreateTexture2D(&colorDesc, nullptr, colorTexture.GetAddressOf())) ||
             FAILED(a_device->CreateRenderTargetView(colorTexture.Get(), nullptr, renderTargetView.GetAddressOf())))
         {
             return false;
         }
+        if (m_platformDevice->IsDeferred() &&
+            FAILED(a_device->CreateShaderResourceView(colorTexture.Get(), nullptr, colorView.GetAddressOf())))
+            return false;
 
         D3D11_TEXTURE2D_DESC depthDesc = colorDesc;
         depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -966,6 +980,7 @@ namespace Meridian::Render::NifPreview
         }
 
         m_colorTexture = std::move(colorTexture);
+        m_colorView = std::move(colorView);
         m_renderTargetView = std::move(renderTargetView);
         m_depthTexture = std::move(depthTexture);
         m_depthStencilView = std::move(depthStencilView);
@@ -1185,6 +1200,14 @@ namespace Meridian::Render::NifPreview
             // The source must no longer be bound for output when the transport
             // copies it into the shared ring.
             context->OMSetRenderTargets(0, nullptr, nullptr);
+            if (m_platformDevice->IsDeferred())
+            {
+                if (m_isShuttingDown.load(std::memory_order_acquire)) return false;
+                const auto hr = m_platformDevice->SubmitDeferredFrame();
+                if (FAILED(hr))
+                    spdlog::error("NifPreviewRenderer: deferred frame submission failed ({:#010x})", std::uint32_t(hr));
+                return SUCCEEDED(hr);
+            }
         }
 
         return m_transport.ProduceFrame(m_colorTexture.Get());

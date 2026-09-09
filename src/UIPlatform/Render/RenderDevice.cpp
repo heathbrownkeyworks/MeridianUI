@@ -4,6 +4,40 @@
 
 namespace Meridian::Render
 {
+    bool RenderDevice::CreateDeferred(ID3D11Device* a_gameDevice)
+    {
+        if (a_gameDevice == nullptr || IsValid()) return false;
+        Microsoft::WRL::ComPtr<ID3D11Device1> device;
+        Microsoft::WRL::ComPtr<ID3D11DeviceContext> deferred, immediate;
+        auto hr = a_gameDevice->QueryInterface(IID_PPV_ARGS(device.GetAddressOf()));
+        if (SUCCEEDED(hr)) hr = device->CreateDeferredContext(0, deferred.GetAddressOf());
+        if (FAILED(hr))
+        {
+            MERIDIAN_FT_LOG_ERROR("RenderDevice: NIF deferred context creation failed ({:#010x})", std::uint32_t(hr));
+            return false;
+        }
+        device->GetImmediateContext(immediate.GetAddressOf());
+        if (immediate == nullptr) return false;
+        m_device = std::move(device);
+        m_context = std::move(deferred);
+        m_submissionContext = std::move(immediate);
+        return true;
+    }
+
+    HRESULT RenderDevice::SubmitDeferredFrame()
+    {
+        if (!IsDeferred() || !IsValid()) return E_UNEXPECTED;
+        auto hr = m_device->GetDeviceRemovedReason();
+        if (FAILED(hr)) return hr;
+        Microsoft::WRL::ComPtr<ID3D11CommandList> commands;
+        hr = m_context->FinishCommandList(FALSE, commands.GetAddressOf());
+        if (FAILED(hr)) return hr;
+        // TRUE restores the game's bindings, including shader stages we never
+        // touch. FALSE above starts the next preview pass from default state.
+        m_submissionContext->ExecuteCommandList(commands.Get(), TRUE);
+        return m_device->GetDeviceRemovedReason();
+    }
+
     bool RenderDevice::ProbeSharedKeyedTransport(ID3D11Device* a_gameDevice)
     {
         D3D11_TEXTURE2D_DESC desc{};
