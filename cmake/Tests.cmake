@@ -3,6 +3,20 @@
 # already included CTest and defined the `set_compile_options()` function.
 
 if(BUILD_TESTING)
+    add_test(
+        NAME BuildReleaseScriptTests
+        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+                -File "${CMAKE_CURRENT_SOURCE_DIR}/tests/BuildReleaseScriptTests.ps1"
+                -SourceRoot "${CMAKE_CURRENT_SOURCE_DIR}"
+                -ScratchRoot "${CMAKE_CURRENT_BINARY_DIR}/BuildReleaseScriptTests"
+    )
+    add_executable(BuildConfigurationTests tests/UIPlatform/BuildConfigurationTests.cpp)
+    set_compile_options(BuildConfigurationTests)
+    target_compile_definitions(BuildConfigurationTests PRIVATE
+        $<$<CONFIG:Release>:MERIDIAN_EXPECT_RELEASE>
+        $<$<CONFIG:Debug>:MERIDIAN_EXPECT_DEBUG>)
+    add_test(NAME BuildConfigurationTests COMMAND BuildConfigurationTests)
+
     # Exercise the production service with a counted CEF boundary. No Skyrim
     # process or libcef.dll is loaded by these failure-injection tests.
     add_executable(

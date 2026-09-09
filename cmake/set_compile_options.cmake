@@ -1,4 +1,5 @@
 function(set_compile_options target)
+    target_compile_definitions(${target} PRIVATE WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
     target_compile_features(
         ${target}
         PRIVATE
@@ -34,6 +35,7 @@ function(set_compile_options target)
             PROPERTIES
             MSVC_RUNTIME_LIBRARY
                 "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+            PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/symbols/$<CONFIG>"
         )
 
         target_link_options(

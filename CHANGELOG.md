@@ -2,6 +2,17 @@
 
 All notable MeridianUI changes are recorded here.
 
+## 1.3.0 - Candidate
+
+- Updated the embedded browser and Skyrim integration libraries.
+- Reorganized the build system and added Windows build presets.
+- Fixed build-test reporting and Release/Debug configuration.
+- Corrected the browser download checksum and kept debug symbols out of mod packages.
+- Kept existing public APIs and startup/rendering protections.
+
+Dependency and build-system contribution by [langfod](https://github.com/langfod).
+Runtime validation is tracked in the [1.3.0 gate](docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md).
+
 ## 1.2.1 - 2026-09-05
 
 ### Fixed

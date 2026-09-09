@@ -6,11 +6,11 @@ Meridian is an independent fork of [NirnLabUIPlatform](https://github.com/kkEngi
 
 ## Current status
 
-The current source version is 1.2.1. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
+The current source version is 1.3.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
 
-The runtime results below were recorded for 1.2.0. Elevated and ordinary MO2
-gameplay validation of the 1.2.1 startup fix is **NOT RUN**; see the
-[startup runtime gate](docs/testing/MERIDIAN_ELEVATED_STARTUP_RUNTIME_GATE.md).
+The runtime results below were recorded for 1.2.0. Gameplay validation of the
+1.3.0 dependency update is **NOT RUN**; see the
+[1.3.0 runtime gate](docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md).
 
 | Runtime | Status |
 | --- | --- |
@@ -21,7 +21,17 @@ gameplay validation of the 1.2.1 startup fix is **NOT RUN**; see the
 
 SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing described below. Meridian's default presentation order remains unchanged for users who do not need this compatibility mode.
 
-## What's new in 1.2.1
+## What's new in 1.3.0
+
+- Updated Chromium Embedded Framework to 152.0.6 and CommonLibSSE-NG to 7.4.0.
+- Split the build configuration into smaller modules and added repeatable Windows build presets.
+- Corrected test execution, Release optimization, and Debug dependency configuration.
+- Preserved the existing startup, rendering, and malformed-skin protections.
+
+Thanks to [langfod](https://github.com/langfod) for the dependency updates,
+build refactor, and API adaptations in [their contribution](https://github.com/langfod/MeridianUI/pull/1).
+
+## Previous changes in 1.2.1
 
 - Preserve Skyrim's launch privileges during CEF startup, preventing Chromium
   from relaunching the game when MO2 runs as administrator.
@@ -157,21 +167,23 @@ Build requirements:
 
 - Windows 10 or Windows 11
 - Visual Studio 2022 with Desktop development with C++
-- CMake 3.23 or newer
+- CMake 3.26 or newer
 - A current [vcpkg](https://github.com/microsoft/vcpkg) checkout
 
-Set `VCPKG_ROOT`, configure an out-of-source build, and build the Release configuration:
+Set `VCPKG_ROOT`, configure the Release preset, and build its Release configuration:
 
 ```powershell
 $env:VCPKG_ROOT = "C:\path\to\vcpkg"
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+cmake --preset release `
     -DBUILD_TESTING=ON `
     -DMERIDIAN_ENABLE_SIGNING=OFF
-cmake --build build --config Release --parallel
-ctest --test-dir build -C Release --output-on-failure
+cmake --build --preset release --parallel
+ctest --test-dir build/release -C Release --output-on-failure --no-tests=error
 ```
 
-The repository supplies vcpkg overlays for CommonLibSSE-NG and the CEF binary distribution. Production output is staged below `build/dist/Release/Data`.
+The repository supplies vcpkg overlays for CommonLibSSE-NG and the CEF binary distribution. Production output is staged below `build/release/dist/Release/Data`. The presets use matching static Debug and Release dependencies; use the `debug` configure/build presets and `-C Debug` to validate Debug separately.
+
+`BuildRelease.ps1 -buildTests` also configures, builds, and runs the suite, propagating any failure. Add `-skipTests` only to compile without running tests. With no `-buildTests` flag, tests are neither built nor run. `-fresh` clears the CMake configuration cache before configuring again.
 
 Optional build flags:
 

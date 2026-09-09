@@ -14,8 +14,5 @@ set(VCPKG_LIBRARY_LINKAGE static)
 # Set vcpkg build type to release
 set(VCPKG_BUILD_TYPE release)
 
-# FFmpeg is loaded via Windows delay-load; build as shared DLLs
-if(PORT STREQUAL "cef-prebuilt")
-    set(VCPKG_CRT_LINKAGE dynamic)
-    set(VCPKG_LIBRARY_LINKAGE dynamic)
-endif()
+# The prebuilt CEF runtime remains a DLL; its static C++ wrapper uses the
+# same static CRT as Meridian. Do not override the wrapper's CRT linkage.

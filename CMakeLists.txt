@@ -1,15 +1,16 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.26)
 add_definitions(-D_WIN32_WINNT=0x0A00)
 
 option(BUILD_AS_SHARED "Build as dll skse plugin else build as static lib" ON)
 option(MERIDIAN_ENABLE_SIGNING "Code-sign release binaries with Azure Artifact Signing" OFF)
 option(MERIDIAN_BUILD_FIXTURE "Build and stage the in-game MeridianUITest fixture" OFF)
 option(MERIDIAN_BUILD_NIF_TEST "Build the standalone MeridianNifTest SKSE consumer" OFF)
+option(ENABLE_LTO "Enable link-time optimization for Release platform libraries" ON)
 
 # Version
 set(LIB_MAJOR_VERSION 1)
-set(LIB_MINOR_VERSION 2)
-set(LIB_PATCH_VERSION 1)
+set(LIB_MINOR_VERSION 3)
+set(LIB_PATCH_VERSION 0)
 set(API_MAJOR_VERSION 1)
 set(API_MINOR_VERSION 0)
 
@@ -168,6 +169,7 @@ if(BUILD_AS_SHARED)
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_DLSS5_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_VIEW_1_HORDE_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_NIF_ACTOR_APPEARANCE_RUNTIME_GATE.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_1.3.0_RUNTIME_GATE.md
             ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
         COMMENT "Staging Meridian SDK, guides, and license notices..."
         VERBATIM

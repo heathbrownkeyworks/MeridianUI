@@ -5,8 +5,12 @@
 # already defined NL_UI_PATH.
 
 add_library(cef INTERFACE)
-find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
-string(REPLACE "/debug/lib/" "/lib/" CEF_LIBRARY_RELEASE ${CEF_LIBRARY_DEBUG})
+find_library(CEF_LIBRARY_DEBUG NAMES libcef_dll_wrapper
+    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib"
+    NO_DEFAULT_PATH REQUIRED)
+find_library(CEF_LIBRARY_RELEASE NAMES libcef_dll_wrapper
+    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
+    NO_DEFAULT_PATH REQUIRED)
 find_path(CEF_INCLUDE_DIR include/cef_app.h)
 find_path(CEF_SHARE share/cef-prebuilt)
 set(CEF_SHARE "${CEF_SHARE}/share/cef-prebuilt")

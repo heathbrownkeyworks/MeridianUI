@@ -49,7 +49,7 @@ vcpkg_cmake_configure(
         -DSKSE_SUPPORT_PATCH_SAFETY=on
         -DENABLE_SKYRIM_SE=on
         -DENABLE_SKYRIM_AE=on
-        -DENABLE_SKYRIM_VR=on
+        -DENABLE_SKYRIM_VR=off
         "-DFETCHCONTENT_SOURCE_DIR_HDE64=${HDE64_SOURCE_PATH}"
 )
 

@@ -1,4 +1,5 @@
 param(
+    [ValidateSet('release', 'debug')]
     [string]$preset = "release",
     [int]$threads,
     [switch]$buildTests = $false,
@@ -61,11 +62,12 @@ function Import-VsDevCmdEnvironment {
 }
 
 # Load in template default variables
-. .\Build_Config_Template.ps1
+. (Join-Path $PSScriptRoot 'Build_Config_Template.ps1')
 
 # Load in local variable overides
-if (Test-Path .\Build_Config_Local.ps1) {
-    . .\Build_Config_Local.ps1
+$localConfigPath = Join-Path $PSScriptRoot 'Build_Config_Local.ps1'
+if (Test-Path -LiteralPath $localConfigPath) {
+    . $localConfigPath
 }
 if (-not $threads) {
     if ($localDefaultThreads) {
@@ -74,7 +76,7 @@ if (-not $threads) {
     } else {
         $threads = $defaultThreads
         Write-Host "Using default thread count: $threads"
-    }   
+    }
 }
 
 Write-Host "Running preset $preset"
@@ -140,13 +142,12 @@ if ($gitCommand) {
 }
 
 # Build cmake configure arguments
-$cmakeArgs = @("-S", ".", "--preset=$preset", "-DCMAKE_COMPILE_JOBS=$threads", "-Wno-dev")
+$cmakeArgs = @("-S", $PSScriptRoot, "--preset=$preset", "-DCMAKE_COMPILE_JOBS=$threads", "-Wno-dev")
 $cmakeArgs += "-DCMAKE_CXX_COMPILER=$($clCommand.Source)"
 
 if ($buildTests) {
     $cmakeArgs += "-DBUILD_TESTING=ON"
     Write-Host "Test compilation enabled (-buildTests flag)"
-    $skipTests = $true
 } else {
     $cmakeArgs += "-DBUILD_TESTING=OFF"
 }
@@ -158,6 +159,12 @@ if ($skipTests) {
 if ($noLTO) {
     $cmakeArgs += "-DENABLE_LTO=OFF"
     Write-Host "LTO disabled (-noLTO flag) for faster link times"
+} else {
+    $cmakeArgs += "-DENABLE_LTO=ON"
+}
+
+if ($fresh) {
+    $cmakeArgs += "--fresh"
 }
 
 $global:buildStartTime = Get-Date
@@ -169,13 +176,12 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 
-# Multi-config generators (Visual Studio) default to the Debug configuration
-# when `cmake --build` is given no --config, which would compile the project
-# as Debug (MTd) and fail to link against the Release-only vcpkg static
-# libraries (LNK2038 RuntimeLibrary/_ITERATOR_DEBUG_LEVEL mismatch).
+# Select the configuration explicitly for multi-config generators (Visual Studio)
+# so the requested preset and its matching dependency libraries stay aligned.
 $buildConfig = if ($preset -ieq "debug") { "Debug" } else { "Release" }
 
-& cmake --build --preset=$preset --config $buildConfig --parallel $threads
+$buildDirectory = Join-Path $PSScriptRoot "build/$preset"
+& cmake --build $buildDirectory --config $buildConfig --parallel $threads
 if ($LASTEXITCODE -ne 0) {
     Write-Host "cmake build failed with exit code $LASTEXITCODE." -ForegroundColor Red
     exit $LASTEXITCODE
@@ -184,12 +190,16 @@ if ($LASTEXITCODE -ne 0) {
 $build_time = (Get-Date) - $global:buildStartTime
 
 # Run tests after build (unless -skipTests)
-if (-not $skipTests) {
+if ($buildTests -and -not $skipTests) {
     Write-Host "Running tests..."
     #Example to exclude perf tests:
     #& ctest --test-dir "build/$preset" --output-on-failure -LE "perf|performance"
     # --timeout 300 is a backstop only; no healthy test comes near it.
-    & ctest --test-dir "build/$preset" -C $buildConfig --output-on-failure -j 2 --timeout 300 --progress
+    & ctest --test-dir $buildDirectory -C $buildConfig --output-on-failure -j 2 --timeout 300 --progress --no-tests=error
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ctest failed with exit code $LASTEXITCODE." -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 }
 
 Write-Host "`nBuild time: $($build_time.TotalSeconds) seconds.`n" -ForegroundColor Green
