@@ -13,12 +13,17 @@ namespace Meridian::Input
         {
             if (owner == m_owner)
                 return false;
+            const bool leavingOwner = m_owner != 0;
             m_owner = owner;
             ++m_generation;
             m_repeatDirection = Control::None;
             for (std::size_t i = 1; i < ControlCount; ++i)
                 if (m_value[i] != 0 || m_y[i] != 0)
+                {
                     m_blocked[i] = true;
+                    if (leavingOwner)
+                        m_uiOwned[i] = true;
+                }
             return true;
         }
         void RequireNeutral()
@@ -44,6 +49,7 @@ namespace Meridian::Input
             m_value.fill(0);
             m_y.fill(0);
             m_gameDown.fill(false);
+            m_uiOwned.fill(false);
             RequireNeutral();
             ++m_generation;
         }
@@ -94,7 +100,9 @@ namespace Meridian::Input
             const float old = m_value[i];
             m_value[i] = value;
             bool wasBlocked = m_blocked[i];
-            bool consumed = m_owner != 0 || wasBlocked || forceCapture;
+            // Rearming UI actions is separate from suppressing gameplay. A
+            // reconnect with no UI owner must preserve normal game input.
+            bool consumed = m_owner != 0 || m_uiOwned[i] || forceCapture;
             Phase phase = value == old ? Phase::None : (value == 0 ? Phase::Release : (old == 0 ? Phase::Press : Phase::Change));
             if (value == 0)
             {
@@ -104,9 +112,12 @@ namespace Meridian::Input
                     consumed = false;
                 m_gameDown[i] = false;
                 m_blocked[i] = false;
+                m_uiOwned[i] = false;
             }
             else if (!consumed)
                 m_gameDown[i] = true;
+            else
+                m_uiOwned[i] = true;
             if (forceCapture && value != 0)
                 m_blocked[i] = true;
             if (wasBlocked || forceCapture || !m_owner)
@@ -131,16 +142,19 @@ namespace Meridian::Input
             m_value[i] = x;
             m_y[i] = y;
             bool blocked = m_blocked[i];
-            bool consume = m_owner != 0 || blocked;
+            bool consume = m_owner != 0 || m_uiOwned[i];
             if (x == 0 && y == 0)
             {
                 if (m_gameDown[i])
                     consume = false;
                 m_gameDown[i] = false;
                 m_blocked[i] = false;
+                m_uiOwned[i] = false;
             }
             else if (!consume)
                 m_gameDown[i] = true;
+            else
+                m_uiOwned[i] = true;
             return {consume, changed && m_owner && !blocked ? Phase::Change : Phase::None};
         }
         Control Direction(const UI::Input::ViewInputConfig* config = nullptr) const
@@ -196,7 +210,7 @@ namespace Meridian::Input
     private:
         std::uint64_t m_owner = 0, m_generation = 0;
         std::array<float, ControlCount> m_value{}, m_y{};
-        std::array<bool, ControlCount> m_blocked{}, m_gameDown{};
+        std::array<bool, ControlCount> m_blocked{}, m_gameDown{}, m_uiOwned{};
         Control m_repeatDirection = Control::None;
         double m_nextRepeat = 0;
         bool m_initialRepeat = false;

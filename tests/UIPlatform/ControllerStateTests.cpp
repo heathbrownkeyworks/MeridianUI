@@ -64,5 +64,16 @@ int main()
     check(movement.Repeat(1, true, &remapped) == Control::DpadUp && movement.InitialRepeat(), "remapped direction emits initial action");
     check(movement.Repeat(1.2, true, &remapped) == Control::None, "remapped direction respects delay");
     check(movement.Repeat(1.4, true, &remapped) == Control::DpadUp && !movement.InitialRepeat(), "remapped direction repeats deliberately");
+    ControllerState passive;
+    passive.ResetDevice();
+    passive.Seed(Control::South, 1);
+    passive.Seed(Control::LeftStick, 1, 0);
+    check(!passive.Button(Control::South, 1).consume, "reconnect without a UI must preserve gameplay buttons");
+    check(!passive.Stick(Control::LeftStick, 1, 0).consume, "reconnect without a UI must preserve gameplay movement");
+    check(!passive.Armed(Control::South), "pass-through reconnect cannot trigger an opening shortcut until neutral");
+    passive.Button(Control::South, 0);
+    check(passive.Button(Control::South, 1, true).consume, "registered opening shortcut captures activation");
+    check(passive.Button(Control::South, 1).consume, "shortcut hold stays captured while callback is pending");
+    check(passive.Button(Control::South, 0).consume, "shortcut release stays captured before focus grant");
     return failures ? 1 : 0;
 }
