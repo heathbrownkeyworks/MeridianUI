@@ -6,7 +6,12 @@ Meridian is an independent fork of [NirnLabUIPlatform](https://github.com/kkEngi
 
 ## Current status
 
-The current source version is 1.4.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable.
+The current source version is 1.5.0. The public `IUIPlatformAPI` version 1.0, `Meridian.View/1`, and native rendering API versions remain stable. Controller support is available through the optional `Meridian.Input/1` extension.
+
+Controller operation has been confirmed in the author's tested setup. See the
+[controller guide](docs/MeridianInput-AuthorGuide.md) for consumer integration and
+the [controller runtime matrix](docs/testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md)
+for the scope of that confirmation.
 
 The runtime results below were recorded for 1.2.0. Gameplay validation of the
 1.4.0 DXVK candidate and its 1.3.0 dependency baseline is **NOT RUN**; see the
@@ -21,7 +26,18 @@ The runtime results below were recorded for 1.2.0. Gameplay validation of the
 
 SkyrimUpscaler Build 14 uses the opt-in `BeforeRendererEnd` compositor timing described below. Meridian's default presentation order remains unchanged for users who do not need this compatibility mode.
 
-## What's new in 1.4.0
+## What's new in 1.5.0
+
+- Added opt-in controller support for Meridian views.
+- Added shared focus navigation, an optional stick cursor, and button prompts.
+- Added configurable opening shortcuts and balanced input cleanup.
+- Added a standalone controller test UI and an integration guide for mod authors.
+
+Each consumer enables controller support and defines its own actions, navigation
+scopes, and prompt styling. Existing keyboard/mouse behavior remains available;
+free-text entry still uses a physical keyboard.
+
+## Previous changes in 1.4.0
 
 - Added automatic CPU browser frame uploads for DXVK on Windows.
 - Added GPU rendering for built-in NIF previews on Windows DXVK.
@@ -73,6 +89,7 @@ build refactor, and API adaptations in [their contribution](https://github.com/l
 - CPU browser uploads for Windows DXVK, with bounded retained frames and partial updates
 - Multiple independent browser views
 - Shared keyboard, mouse, cursor, focus, pause, and text-entry ownership across consumer mods
+- Opt-in controller navigation, stick cursor, prompts, and opening shortcuts through Input/1
 - Focused input isolation that prevents duplicate delivery and interference from competing hooks
 - Automatic restoration of the player's movement mode when a focused interface closes
 - JavaScript-to-C++ functions, C++-to-JavaScript events, and asynchronous promise bindings

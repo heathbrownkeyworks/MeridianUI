@@ -1,6 +1,6 @@
 # Meridian.Input/1 consumer guide
 
-Status: development candidate on the controllersupport branch. Feature-detect Input/1; a version string alone does not establish availability. See [controller validation](testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md). In-game controller validation is separate from native/browser tests.
+Available in Meridian UI 1.5.0 through Meridian.Input/1. Feature-detect the extension so older or custom runtimes retain keyboard/mouse fallback. See [controller validation](testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md) for the user-confirmed test and detailed runtime matrix.
 
 ## Integration
 

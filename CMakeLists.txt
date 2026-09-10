@@ -10,7 +10,7 @@ option(ENABLE_LTO "Enable link-time optimization for Release platform libraries"
 
 # Version
 set(LIB_MAJOR_VERSION 1)
-set(LIB_MINOR_VERSION 4)
+set(LIB_MINOR_VERSION 5)
 set(LIB_PATCH_VERSION 0)
 set(API_MAJOR_VERSION 1)
 set(API_MINOR_VERSION 0)

@@ -6,7 +6,9 @@ Branch: controllersupport. Implementation commits: 00f2e51 and 10dcfa5d32cdfcb1c
 Baseline: Meridian UI 1.4.0, a169ef4f2e6c0f38a5f1af98eccfff8c8e6aef8f.
 The local approved plan is docs/plans/2026-09-10-controller-support.md.
 
-The artifacts recorded below were built unsigned and retain the baseline version metadata. Heath has since confirmed that the controller works and looks good in his tested setup. The installed artifact hashes, exact Skyrim runtime and controller model were not recorded with that confirmation. **Query Meridian.Input/1 to establish API availability.** A production release version has not been assigned.
+Release version: **1.5.0**. Heath authorized building, signing, deploying and pushing this version. Release verification is in progress; the artifact table below records the earlier implementation candidate, not the signed release. **Query Meridian.Input/1 to establish API availability.**
+
+Heath confirmed that the controller works and looks good in his tested setup. The installed artifact hashes, exact Skyrim runtime and controller model were not recorded with that confirmation.
 
 ## Implemented platform contract
 
@@ -37,7 +39,7 @@ Toolchain: MSVC 14.44, C++23, CommonLibSSE-NG 7.4.0 and CEF 152.0.6. Dependencie
 
 Logs: build/controller-full-build.log, build/controller-ctest.log, build/controller-node-tests.log and build/controller-browser-tests.log. The regression suite includes held-on-open/close, passive reconnect gameplay passthrough, mixed forwarding, late-hook visibility, cursor edge balancing, queue invalidation, and existing focus/text/key tests. These are automated model/browser checks, not claims of exercised Skyrim hardware.
 
-## Candidate artifacts
+## Earlier implementation candidate artifacts
 
 Runtime Data tree: build/release/dist/Release/Data.
 Separate diagnostic mod: build/release/input-test/Release.

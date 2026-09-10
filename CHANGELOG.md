@@ -2,14 +2,14 @@
 
 All notable MeridianUI changes are recorded here.
 
-## Unreleased - Controller support
+## 1.5.0 - 2026-09-10
 
 - Added optional controller support for Meridian views through a shared input API.
 - Added focus navigation, an optional stick cursor, button prompts and opening shortcuts.
 - Added shared navigation helpers and a standalone controller test UI for mod authors.
 - Preserved existing View/1 integration and keyboard text entry.
 
-This is a development candidate. Controller operation is user-confirmed; detailed runtime and hardware matrix results remain unrecorded.
+Controller operation is user-confirmed; detailed runtime and hardware matrix results remain unrecorded.
 
 ## 1.4.0 - Candidate
 
