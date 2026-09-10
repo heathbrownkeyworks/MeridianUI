@@ -22,6 +22,8 @@ file(COPY_FILE "${PROJECT_ROOT}/LICENSES/MIT.txt" "${ROOT}/licenses/meridianui-a
 file(COPY_FILE "${PROJECT_ROOT}/THIRD_PARTY_NOTICES.md" "${ROOT}/THIRD_PARTY_NOTICES.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/MeridianUI-AuthorGuide.md" "${ROOT}/docs/MeridianUI-AuthorGuide.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/MeridianView-AuthorGuide.md" "${ROOT}/docs/MeridianView-AuthorGuide.md" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${PROJECT_ROOT}/docs/MeridianInput-AuthorGuide.md" "${ROOT}/docs/MeridianInput-AuthorGuide.md" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${PROJECT_ROOT}/docs/testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md" "${ROOT}/docs/testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md" "${ROOT}/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/testing/AE_1.7.104_RUNTIME_GATE.md" "${ROOT}/docs/testing/AE_1.7.104_RUNTIME_GATE.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${PROJECT_ROOT}/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md" "${ROOT}/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md" ONLY_IF_DIFFERENT)

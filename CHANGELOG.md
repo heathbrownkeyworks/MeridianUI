@@ -2,6 +2,15 @@
 
 All notable MeridianUI changes are recorded here.
 
+## Unreleased - Controller support
+
+- Added optional controller support for Meridian views through a shared input API.
+- Added focus navigation, an optional stick cursor, button prompts and opening shortcuts.
+- Added shared navigation helpers and a standalone controller test UI for mod authors.
+- Preserved existing View/1 integration and keyboard text entry.
+
+This is a development candidate. Skyrim and controller hardware validation is **NOT RUN**.
+
 ## 1.4.0 - Candidate
 
 - Added automatic browser rendering compatibility for DXVK on Windows.

@@ -106,6 +106,36 @@ namespace Meridian::Config
             return overrides;
         }
 
+        auto controllerNumber=[&](const char* key, double low, double high, auto& destination) {
+            const char* value=ini.GetValue("Controller",key,nullptr);
+            if(!value) return;
+            double parsed=0;
+            const auto end=value+std::strlen(value);
+            const auto result=std::from_chars(value,end,parsed);
+            if(result.ec==std::errc{} && result.ptr==end && std::isfinite(parsed) && parsed>=low && parsed<=high)
+                destination=static_cast<std::remove_reference_t<decltype(destination)>>(parsed);
+            else WarnBadValue(key);
+        };
+        for(auto [key,destination]:{std::pair{"Enabled",&overrides.controller.enabled},
+            std::pair{"TraceInput",&overrides.controller.trace}}) {
+            if(const auto* value=ini.GetValue("Controller",key,nullptr)) {
+                if(auto parsed=ParseBool(value)) *destination=*parsed;
+                else WarnBadValue(key);
+            }
+        }
+        controllerNumber("DeadZone",0.05,0.9,overrides.controller.deadZone);
+        controllerNumber("ExitDeadZone",0.0,0.89,overrides.controller.exitDeadZone);
+        controllerNumber("CursorSpeed",100,3000,overrides.controller.cursorSpeed);
+        controllerNumber("RepeatDelay",0.1,2.0,overrides.controller.repeatDelay);
+        controllerNumber("RepeatInterval",0.03,0.5,overrides.controller.repeatInterval);
+        if(overrides.controller.exitDeadZone>=overrides.controller.deadZone)
+            overrides.controller.exitDeadZone=overrides.controller.deadZone*0.72f;
+        if(const auto* value=ini.GetValue("Controller","GlyphFamily",nullptr)) {
+            if(EqualsCaseInsensitive(value,"PlayStation")) overrides.controller.glyphFamily=UI::Input::GlyphFamily::PlayStation;
+            else if(EqualsCaseInsensitive(value,"Generic")) overrides.controller.glyphFamily=UI::Input::GlyphFamily::Generic;
+            else if(!EqualsCaseInsensitive(value,"Xbox")) WarnBadValue("Controller.GlyphFamily");
+        }
+
         if (const char* value = ini.GetValue("General", "RendererType", nullptr))
         {
             if (EqualsCaseInsensitive(value, "RingBuffer"))

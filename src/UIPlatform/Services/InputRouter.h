@@ -32,6 +32,7 @@ namespace Meridian::Services
         void Register();
         void SetShuttingDown(bool a_value);
         void PrioritizeForDispatch(RE::BSTEventSource<RE::InputEvent*>* a_eventSource);
+        std::unordered_set<RE::InputEvent*> RouteBatch(RE::InputEvent* a_events);
 
         RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event,
                                               RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;

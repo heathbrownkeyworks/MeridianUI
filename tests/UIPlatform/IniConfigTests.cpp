@@ -96,6 +96,18 @@ int main()
         Expect(s.remoteDebuggingPort == 9009, "enabled plus port explicitly opts into remote debugging");
     }
 
+    {
+        const auto o=Meridian::Config::ParseIni("[Controller]\nEnabled=false\nTraceInput=true\nDeadZone=0.4\nExitDeadZone=0.2\nCursorSpeed=1200\nRepeatDelay=0.5\nRepeatInterval=0.1\nGlyphFamily=PlayStation\n");
+        Expect(!o.controller.enabled && o.controller.trace,"controller switches parsed");
+        Expect(o.controller.deadZone==0.4f && o.controller.exitDeadZone==0.2f,"controller dead zones parsed");
+        Expect(o.controller.cursorSpeed==1200 && o.controller.repeatDelay==0.5 && o.controller.repeatInterval==0.1,"controller timing parsed");
+        Expect(o.controller.glyphFamily==Meridian::UI::Input::GlyphFamily::PlayStation,"prompt family parsed");
+        const auto bad=Meridian::Config::ParseIni("[Controller]\nEnabled=maybe\nDeadZone=nan\nExitDeadZone=0.8\nCursorSpeed=inf\nRepeatDelay=-1\nRepeatInterval=2\nGlyphFamily=unknown\n");
+        Expect(bad.controller.enabled && bad.controller.deadZone==0.25f && bad.controller.cursorSpeed==900,"malformed controller settings retain defaults");
+        Expect(bad.controller.exitDeadZone<bad.controller.deadZone,"exit threshold repaired below enter threshold");
+        Expect(bad.controller.repeatDelay==0.350 && bad.controller.repeatInterval==0.090,"out-of-range repeat settings rejected");
+    }
+
     if (g_failureCount != 0)
     {
         std::cerr << g_failureCount << " IniConfig test(s) failed\n";

@@ -5,6 +5,7 @@
 
 #include "MeridianUIAPI/Settings.h"
 #include "Render/BrowserTransport.h"
+#include "Input/ControllerTypes.h"
 
 namespace Meridian::Config
 {
@@ -18,6 +19,7 @@ namespace Meridian::Config
 
     struct IniOverrides
     {
+        Meridian::Input::ControllerTuning controller;
         std::optional<Meridian::UI::RendererType> rendererType;
         std::optional<CompositorTiming> compositorTiming;
         std::optional<Meridian::Render::BrowserTransport> browserTransport;

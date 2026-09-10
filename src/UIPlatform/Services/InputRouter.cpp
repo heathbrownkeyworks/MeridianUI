@@ -4,6 +4,7 @@
 #include "Menus/FocusArbiter.h"
 #include "Render/RenderHost.h"
 #include "Services/InputLangSwitchService.h"
+#include "Services/ControllerInputService.h"
 
 #include <vector>
 
@@ -66,128 +67,63 @@ namespace Meridian::Services
             languageSwitch);
     }
 
-    RE::BSEventNotifyControl InputRouter::ProcessEvent(RE::InputEvent* const* a_event,
-                                                       RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
+    std::unordered_set<RE::InputEvent*> InputRouter::RouteBatch(RE::InputEvent* events)
     {
-        // The outer dispatch guard already delivered this batch to Meridian.
-        // Continue the engine sink walk without sending it to Chromium twice.
-        if (s_preprocessedDispatchDepth != 0)
-        {
-            return RE::BSEventNotifyControl::kContinue;
-        }
-
-        if (a_event == nullptr || *a_event == nullptr ||
-            m_isShuttingDown.load(std::memory_order_acquire))
-        {
-            return RE::BSEventNotifyControl::kContinue;
-        }
-
+        if (m_isShuttingDown.load())
+            return {};
+        auto consumed = ControllerInputService::GetSingleton().Route(events);
         auto& compositor = Meridian::Render::RenderHost::GetSingleton().GetCompositor();
-        if (compositor.Empty())
-        {
-            return RE::BSEventNotifyControl::kContinue;
-        }
-
-        auto inputEvent = *a_event;
-        auto result = RE::BSEventNotifyControl::kContinue;
         const auto menus = compositor.SortedSnapshot();
-
-        // Focus may be claimed by a modifier chord (for example Shift+Z).
-        // The down event has already reached Skyrim before the claim, but a
-        // focused browser would normally stop the matching release event.
-        // Pass through only a batch whose button events are exclusively
-        // releases of keys held at the first focus claim. This balances the
-        // game's key state without leaking ordinary focused input.
-        auto& focusArbiter = Meridian::Menus::FocusArbiter::GetSingleton();
-        std::vector<std::uint32_t> openingKeyReleases;
-        bool releaseOnlyBatch = true;
-        for (auto* candidate = *a_event; candidate != nullptr; candidate = candidate->next)
+        auto& focus = Meridian::Menus::FocusArbiter::GetSingleton();
+        for (auto* event = events; event; event = event->next)
         {
-            if (candidate->GetEventType() != RE::INPUT_EVENT_TYPE::kButton)
-            {
+            if (event->GetDevice() == RE::INPUT_DEVICE::kGamepad)
                 continue;
-            }
-
-            const auto* button = candidate->AsButtonEvent();
-            const auto device = button->GetDevice();
-            const bool keyboardEvent = device == RE::INPUT_DEVICE::kKeyboard ||
-                                       device == RE::INPUT_DEVICE::kFlatVirtualKeyboard;
-            if (!keyboardEvent || !button->IsUp() ||
-                !focusArbiter.IsOpeningKeyHeld(button->GetIDCode()))
+            bool handled = false;
+            if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kButton)
             {
-                releaseOnlyBatch = false;
-                break;
-            }
-            openingKeyReleases.push_back(button->GetIDCode());
-        }
-
-        bool passThroughOpeningKeyReleases = releaseOnlyBatch && !openingKeyReleases.empty();
-        if (passThroughOpeningKeyReleases)
-        {
-            for (const auto scanCode : openingKeyReleases)
-            {
-                if (!focusArbiter.ConsumeOpeningKeyRelease(scanCode))
-                {
-                    passThroughOpeningKeyReleases = false;
-                    break;
-                }
-            }
-        }
-
-        while (inputEvent != nullptr)
-        {
-            if (inputEvent->GetEventType() == RE::INPUT_EVENT_TYPE::kButton)
-            {
-                // Toggle pass runs for EVERY browser before any focused
-                // browser can swallow the event: focus hotkeys work
-                // regardless of who currently holds focus. Documented
-                // contract: while a registered toggle chord is held, any
-                // button-down that completes or re-satisfies it is consumed
-                // and never reaches a page; key-ups and lone chord-halves
-                // are not intercepted.
-                bool toggled = false;
+                auto button = event->AsButtonEvent();
                 for (auto it = menus.rbegin(); it != menus.rend(); ++it)
+                    handled = (*it)->ProcessToggleKeys(button) || handled;
+                if (handled)
                 {
-                    if ((*it)->ProcessToggleKeys(inputEvent->AsButtonEvent()))
-                    {
-                        toggled = true;
-                    }
-                }
-                if (toggled)
-                {
-                    result = RE::BSEventNotifyControl::kStop;
-                    inputEvent = inputEvent->next;
+                    consumed.insert(event);
                     continue;
                 }
+                for (auto it = menus.rbegin(); it != menus.rend(); ++it)
+                    if ((*it)->ProcessButton(button))
+                    {
+                        handled = true;
+                        break;
+                    }
+                const bool keyboard = event->GetDevice() == RE::INPUT_DEVICE::kKeyboard ||
+                                      event->GetDevice() == RE::INPUT_DEVICE::kFlatVirtualKeyboard;
+                if (keyboard && button->IsUp() && focus.ConsumeOpeningKeyRelease(button->GetIDCode()))
+                    handled = false;
             }
-
-            for (auto it = menus.rbegin(); it != menus.rend(); ++it)
+            else if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove)
             {
-                switch (inputEvent->GetEventType())
-                {
-                case RE::INPUT_EVENT_TYPE::kMouseMove:
-                    if ((*it)->ProcessMouseMove(inputEvent->AsMouseMoveEvent()))
+                for (auto it = menus.rbegin(); it != menus.rend(); ++it)
+                    if ((*it)->ProcessMouseMove(event->AsMouseMoveEvent()))
                     {
-                        result = RE::BSEventNotifyControl::kStop;
-                        continue;
+                        handled = true;
+                        break;
                     }
-                    break;
-                case RE::INPUT_EVENT_TYPE::kButton:
-                    if ((*it)->ProcessButton(inputEvent->AsButtonEvent()))
-                    {
-                        result = RE::BSEventNotifyControl::kStop;
-                        continue;
-                    }
-                    break;
-                default:
-                    break;
-                }
             }
-
-            inputEvent = inputEvent->next;
+            else if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kChar && focus.HasOwner())
+            {
+                handled = true;
+            }
+            if (handled)
+                consumed.insert(event);
         }
-
-        return passThroughOpeningKeyReleases ?
-            RE::BSEventNotifyControl::kContinue : result;
+        return consumed;
+    }
+    RE::BSEventNotifyControl InputRouter::ProcessEvent(RE::InputEvent* const* events,
+                                                       [[maybe_unused]] RE::BSTEventSource<RE::InputEvent*>* source)
+    {
+        if (s_preprocessedDispatchDepth)
+            return RE::BSEventNotifyControl::kContinue;
+        return RouteBatch(events ? *events : nullptr).empty() ? RE::BSEventNotifyControl::kContinue : RE::BSEventNotifyControl::kStop;
     }
 }

@@ -35,7 +35,7 @@ int main()
     using namespace Meridian::Controllers::ViewBridgeScripts;
 
     const auto bootstrap = BuildBootstrap("tok\"en");
-    Expect(bootstrap.starts_with("(function(token){") && bootstrap.ends_with(");"),
+    Expect(bootstrap.find("(function(token){") != std::string::npos && bootstrap.ends_with(");"),
            "bootstrap is emitted as a complete invocation");
     Expect(bootstrap.find("setTimeout(initialize, 16)") != std::string::npos,
            "bootstrap retries when the native CEF object is late");

@@ -1,0 +1,10 @@
+{
+  "name": "meridian-input-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test controller-bridge.test.mjs controller-prompts.test.mjs",
+    "test:navigation": "playwright test"
+  },
+  "devDependencies": { "@playwright/test": "1.63.0" }
+}

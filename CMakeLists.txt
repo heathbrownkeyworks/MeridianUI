@@ -5,6 +5,7 @@ option(BUILD_AS_SHARED "Build as dll skse plugin else build as static lib" ON)
 option(MERIDIAN_ENABLE_SIGNING "Code-sign release binaries with Azure Artifact Signing" OFF)
 option(MERIDIAN_BUILD_FIXTURE "Build and stage the in-game MeridianUITest fixture" OFF)
 option(MERIDIAN_BUILD_NIF_TEST "Build the standalone MeridianNifTest SKSE consumer" OFF)
+option(MERIDIAN_BUILD_INPUT_TEST "Build the standalone MeridianInputTest controller consumer" OFF)
 option(ENABLE_LTO "Enable link-time optimization for Release platform libraries" ON)
 
 # Version
@@ -124,6 +125,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CEFSubprocess.cmake)
 
 # ============================ Tests ============================
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NifMaterialShaders.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/InputWebAssets.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Tests.cmake)
 
 # ============================ UIPlatform ============================
@@ -137,6 +139,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/UIPlatformTest.cmake)
 
 # ============================ Standalone NIF Test ============================
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NifTest.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/InputTest.cmake)
 
 # Stage the public SDK, current guides, and complete direct/transitive license
 # texts as part of the ordinary production Data tree.
@@ -161,6 +164,8 @@ if(BUILD_AS_SHARED)
             ${API_FOLDER_PATH}/LICENSE-MIT
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/MeridianUI-AuthorGuide.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/MeridianView-AuthorGuide.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/MeridianInput-AuthorGuide.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/SE_AE_1.1.1_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/AE_1.7.104_RUNTIME_GATE.md
             ${CMAKE_CURRENT_SOURCE_DIR}/docs/testing/MERIDIAN_FOCUSED_INPUT_RUNTIME_GATE.md

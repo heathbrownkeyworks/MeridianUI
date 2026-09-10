@@ -418,6 +418,7 @@ if(BUILD_TESTING)
         ViewBridgeScriptTests
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
+            ${CMAKE_CURRENT_BINARY_DIR}/include
     )
     target_link_libraries(
         ViewBridgeScriptTests
@@ -668,4 +669,13 @@ if(BUILD_TESTING)
     )
     set_compile_options(FocusSessionStateTests)
     add_test(NAME FocusSessionStateTests COMMAND FocusSessionStateTests)
+endif()
+
+if(BUILD_TESTING)
+    foreach(controller_test ControllerEventAdapterTests InputAPIContractTests ControllerStateTests ControllerDispatchTests ControllerCursorTests ControllerShortcutTests ControllerLifecycleTests)
+        add_executable(${controller_test} tests/UIPlatform/${controller_test}.cpp)
+        target_include_directories(${controller_test} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform)
+        set_compile_options(${controller_test})
+        add_test(NAME ${controller_test} COMMAND ${controller_test})
+    endforeach()
 endif()

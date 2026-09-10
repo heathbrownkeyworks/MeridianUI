@@ -3,6 +3,7 @@
 #include "Render/CEFRingRenderLayer.h"
 #include "Menus/FocusArbiter.h"
 #include "Common/InputChord.h"
+#include "Services/ControllerInputService.h"
 #include <unordered_map>
 
 namespace Meridian::CEF
@@ -39,6 +40,8 @@ namespace Meridian::CEF
         });
 
         m_onWndInactive_Connection = Meridian::Hooks::WinProcHook::OnWindowInactive.connect([&](bool a_gameClosing) {
+            InvalidateControllerInput();
+            Meridian::Services::ControllerInputService::GetSingleton().CancelBrowser(this);
             if (!a_gameClosing)
             {
                 m_keyInputConverter.ProcessAltTab();
@@ -159,7 +162,18 @@ namespace Meridian::CEF
         m_onBeforeBrowserClose_Connection = m_cefClient->onBeforeBrowserClose.connect(
             [this](CefRefPtr<CefBrowser> a_browser) { OnCefBrowserBeforeClose(a_browser); });
 
+        m_onRendererTerminated_Connection = m_cefClient->onRendererTerminated.connect([this]() {
+            InvalidateControllerInput();
+            Meridian::Services::ControllerInputService::GetSingleton().CancelBrowser(this,true);
+            SetTextInputActive(false);
+            Meridian::Menus::FocusArbiter::GetSingleton().Release(this);
+            std::lock_guard lock(m_urlMutex);
+            m_isPageLoaded=false;
+        });
+
         m_onMainFrameLoadStart_Connection = m_cefClient->onMainFrameLoadStart.connect([&]() {
+            InvalidateControllerInput();
+            Meridian::Services::ControllerInputService::GetSingleton().CancelBrowser(this, true);
             // A navigation destroys the old document and its focused element.
             // Do not keep Skyrim in text-entry mode while the replacement page
             // is loading; the new bootstrap will report its own active element.
@@ -339,6 +353,9 @@ namespace Meridian::CEF
 
     bool DefaultBrowser::ProcessToggleKeys(RE::ButtonEvent* a_event)
     {
+        if (a_event == nullptr || !Meridian::Input::IsKeyboardDevice(
+            a_event->GetDevice() == RE::INPUT_DEVICE::kKeyboard,
+            a_event->GetDevice() == RE::INPUT_DEVICE::kFlatVirtualKeyboard)) return false;
         if (m_shutdownStarted.load(std::memory_order_acquire)) { return false; }
 
         if (!a_event->IsDown())
@@ -382,6 +399,8 @@ namespace Meridian::CEF
 
     void DefaultBrowser::BeginShutdown()
     {
+        InvalidateControllerInput();
+        Meridian::Services::ControllerInputService::GetSingleton().CancelBrowser(this,true);
         m_shutdownStarted.store(true, std::memory_order_release);
 
         Meridian::Menus::FocusArbiter::GetSingleton().Release(this);
@@ -492,6 +511,7 @@ namespace Meridian::CEF
 
     void DefaultBrowser::OnFocusGranted()
     {
+        InvalidateControllerInput();
         m_cefClient->SetCursorUpdatesEnabled(true);
         const auto browser = m_cefClient->GetBrowser();
         if (browser != nullptr)
@@ -516,6 +536,8 @@ namespace Meridian::CEF
 
     void DefaultBrowser::OnFocusRevoked()
     {
+        InvalidateControllerInput();
+        Meridian::Services::ControllerInputService::GetSingleton().CancelBrowser(this);
         m_cefClient->SetCursorUpdatesEnabled(false);
         const auto browser = m_cefClient->GetBrowser();
         const auto host = browser != nullptr ? browser->GetHost() : nullptr;

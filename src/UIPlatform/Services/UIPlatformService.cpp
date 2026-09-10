@@ -1,4 +1,5 @@
 #include "UIPlatformService.h"
+#include "Services/ControllerInputService.h"
 #include "Hooks/InputDispatchHook.h"
 #include "Hooks/PresentHook.h"
 #include "Hooks/ShutdownHook.hpp"
@@ -119,6 +120,7 @@ namespace Meridian::Services
         m_logger->info("{}: stopping menu work and draining CEF browsers", NameOf(UIPlatformService));
 
         Meridian::Services::InputRouter::GetSingleton().SetShuttingDown(true);
+        Meridian::Services::ControllerInputService::GetSingleton().Shutdown();
         Meridian::Services::InputLangSwitchService::GetSingleton().SetActive(false);
         Meridian::Render::RenderHost::GetSingleton().BeginShutdown();
 

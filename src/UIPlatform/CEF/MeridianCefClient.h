@@ -52,6 +52,7 @@ namespace Meridian::CEF
         sigslot::signal<CefRefPtr<CefBrowser>> onBeforeBrowserClose;
         sigslot::signal<> onMainFrameLoadStart;
         sigslot::signal<> onMainFrameLoadEnd;
+        sigslot::signal<> onRendererTerminated;
 
         // CefClient
         CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;

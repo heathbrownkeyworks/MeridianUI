@@ -712,8 +712,11 @@ What focus buys the owner:
 * **Keyboard and mouse.** Mouse-move, mouse-button, and keyboard events are delivered
   to the focused browser and swallowed so the game does not also act on them. An
   unfocused browser receives no input at all.
-* **Controller input.** 1.1.0 does not synthesize gamepad navigation. Unsupported
-  controller/device events pass through to Skyrim rather than being swallowed.
+* **Controller input.** View/1 consumers can opt into the separate
+  [Meridian.Input/1 extension](MeridianInput-AuthorGuide.md) for shared focus
+  navigation, an optional stick cursor, prompts, and opening shortcuts. Existing
+  consumers retain their device behavior until they opt in. Feature-detect the
+  extension; hardware validation remains a separate runtime gate.
 * **The cursor.** Claiming focus resets the cursor to the arrow and opens the
   platform's transient focus menu; releasing it restores the vanilla cursor movie.
   Mouse clicks are hit-tested against the browser's on-screen rect, so a click outside

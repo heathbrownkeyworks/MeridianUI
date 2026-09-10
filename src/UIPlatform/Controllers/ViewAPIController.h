@@ -51,6 +51,9 @@ namespace Meridian::Controllers
         void BeginShutdown();
         bool IsShuttingDown() const;
 
+        // Internal lifetime-safe lookup. The public View/1 ABI stays unchanged.
+        std::shared_ptr<Meridian::CEF::DefaultBrowser> GetBrowserForInput(Meridian::UI::View::ViewHandle a_view) const;
+
     private:
         ViewAPIController() = default;
 

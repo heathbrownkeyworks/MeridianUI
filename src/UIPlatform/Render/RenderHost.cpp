@@ -5,6 +5,7 @@
 #include "Menus/FocusArbiter.h"
 #include "Render/CursorRenderer.h"
 #include "Menus/CursorPolicy.h"
+#include "Services/ControllerInputService.h"
 
 namespace Meridian::Render
 {
@@ -484,7 +485,7 @@ namespace Meridian::Render
 
             const auto cursorDecision = Meridian::Menus::CursorPolicy::Evaluate(
                 Meridian::Menus::FocusArbiter::GetSingleton().HasOwner());
-            if (cursorDecision.drawMeridianCursor)
+            if (cursorDecision.drawMeridianCursor && Meridian::Services::ControllerInputService::GetSingleton().DrawCursor())
             {
                 Meridian::Render::CursorRenderer::GetSingleton().Draw(m_renderData);
             }

@@ -3,6 +3,7 @@
 #include "CEF/DefaultBrowser.h"
 #include "Controllers/PublicAPIController.h"
 #include "Controllers/ViewBridgeScripts.h"
+#include "Services/ControllerInputService.h"
 #include "Menus/FocusArbiter.h"
 #include "Scheme/ModSchemePath.h"
 
@@ -151,6 +152,7 @@ namespace Meridian::Controllers
             m_ownedBrowserNames.erase(entry->browserName);
         }
 
+        Services::ControllerInputService::GetSingleton().RemoveView(a_view);
         if (entry->browser != nullptr)
         {
             entry->browser->SetBrowserFocused(false);
@@ -295,6 +297,13 @@ namespace Meridian::Controllers
         return m_isShuttingDown.load(std::memory_order_acquire);
     }
 
+    std::shared_ptr<Meridian::CEF::DefaultBrowser> ViewAPIController::GetBrowserForInput(
+        Meridian::UI::View::ViewHandle a_view) const
+    {
+        const auto entry=GetEntry(a_view);
+        return entry ? entry->browser : nullptr;
+    }
+
     void ViewAPIController::Dispatch(const char** a_args, int a_argsCount)
     {
         if (a_args == nullptr || a_argsCount < 3)
@@ -343,6 +352,11 @@ namespace Meridian::Controllers
             }
         }
 
+        if (listenerName == "__meridian_input")
+        {
+            Services::ControllerInputService::GetSingleton().PageRequest(handle,payload);
+            return;
+        }
         if (textInputBrowser != nullptr)
         {
             if (payload == "1")

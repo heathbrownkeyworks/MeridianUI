@@ -142,8 +142,8 @@ namespace Meridian::Hooks
         auto& router = Meridian::Services::InputRouter::GetSingleton();
         router.PrioritizeForDispatch(a_source);
 
-        const auto result = router.ProcessEvent(a_events, a_source);
-        if (result == RE::BSEventNotifyControl::kStop)
+        const auto consumed = router.RouteBatch(a_events ? *a_events : nullptr);
+        if (!consumed.empty())
         {
             auto& languageSwitch = Meridian::Services::InputLangSwitchService::GetSingleton();
             if (languageSwitch.IsActive())
@@ -152,16 +152,20 @@ namespace Meridian::Hooks
             }
         }
 
-        constexpr RE::InputEvent* emptyEvents[]{nullptr};
-        const auto forwardedEvents = Meridian::Common::SelectForwardedInput(
-            result == RE::BSEventNotifyControl::kStop,
-            a_events,
-            emptyEvents);
+        // The all-pass path preserves the original batch without touching links.
+        const Meridian::Services::InputRouter::PreprocessedDispatchScope forwardingScope;
+        if (consumed.empty())
+        {
+            s_outerOriginal(a_source, a_events);
+            return;
+        }
+        Meridian::Common::ScopedInputFilter<RE::InputEvent> filtered(a_events ? *a_events : nullptr,
+            [&consumed](RE::InputEvent* event) { return consumed.contains(event); });
+        RE::InputEvent* forwardedHead=filtered.Head();
 
         // The original chain eventually reaches Skyrim's event source, where
         // InputRouter is still registered as a sink. Suppress that second visit
         // while forwarding so Chromium receives each physical transition once.
-        const Meridian::Services::InputRouter::PreprocessedDispatchScope forwardingScope;
-        s_outerOriginal(a_source, forwardedEvents);
+        s_outerOriginal(a_source, &forwardedHead);
     }
 }

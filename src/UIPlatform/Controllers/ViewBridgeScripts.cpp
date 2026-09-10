@@ -1,6 +1,7 @@
 #include "Controllers/ViewBridgeScripts.h"
 
 #include <nlohmann/json.hpp>
+#include "InputScript.h"
 
 namespace Meridian::Controllers::ViewBridgeScripts
 {
@@ -26,6 +27,7 @@ namespace Meridian::Controllers::ViewBridgeScripts
 
                 initialized = true;
                 const dispatch = nativeObject.dispatch.bind(nativeObject);
+                window.__meridianInstallInput(dispatch, token);
                 const bound = Object.create(null);
                 Object.defineProperty(window, '__meridianViewBoundListeners', {
                     configurable: true,
@@ -111,7 +113,7 @@ namespace Meridian::Controllers::ViewBridgeScripts
         script += '(';
         script += token;
         script += ");";
-        return script;
+        return std::string(Meridian::Input::BootstrapSource) + "\n" + script;
     }
 
     std::string BuildListener(std::string_view a_listenerName)

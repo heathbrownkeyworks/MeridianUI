@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Meridian Controller Test</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#11151d;color:#eef1f6;font:18px system-ui}
+main{margin:4vh auto;padding:24px;width:90vw;max-width:1300px;background:#1d2431;border:1px solid #526176;border-radius:12px}
+h1{margin:0 0 10px}h2{font-size:20px}p{color:#bfc9d7}button,input,select{font:inherit;padding:10px;border-radius:6px;border:1px solid #71839b;background:#293449;color:inherit}
+button{cursor:pointer}button:hover{background:#394860}button[disabled]{opacity:.4}
+[data-meridian-focused]{outline:3px solid #f9c568;outline-offset:3px}
+.row{display:flex;gap:14px;margin:18px 0;flex-wrap:wrap}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+#list{max-height:240px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px}
+#state{font:13px monospace;white-space:pre-wrap;max-height:160px;overflow:auto}
+#modal{position:fixed;inset:25vh 25vw;background:#2c374b;padding:32px;border:2px solid #f9c568;z-index:10}
+#drag{height:110px;border:2px dashed #8cabca;display:grid;place-content:center;user-select:none;touch-action:none}
+[hidden]{display:none!important}.note{font-size:14px}
+</style></head><body>
+<main id="root">
+<h1>Meridian controller test</h1>
+<p>F10 / LB + Start opens. A accepts, B goes back, D-pad / left stick navigates. Right-stick click toggles the cursor. Escape closes.</p>
+<div class="row" role="tablist"><button id="tab1" role="tab" aria-selected="true">Navigation</button><button id="tab2" role="tab" aria-selected="false">Controls</button></div>
+<div class="row"><button id="accept">Accept counter</button><button id="modalOpen">Open modal</button><button disabled>Disabled</button><button id="cursor">Toggle cursor</button><button id="close">Close</button></div>
+<div class="columns">
+<section><h2>Scrollable selection</h2><div id="list"></div><button id="filter">Filter / restore list</button></section>
+<section><h2>Editing and analog input</h2>
+<label>Name <input id="name" placeholder="Physical keyboard text entry"></label>
+<div class="row"><label>Range <input id="range" type="range" min="0" max="100" value="50"></label><select id="select"><option>First</option><option>Second</option><option disabled>Disabled option</option><option>Fourth</option></select></div>
+<div id="drag">Cursor drag target</div><button id="analog">Custom right-stick scope</button><p id="analogValue">Analog: inactive</p>
+</section></div>
+<p id="result" aria-live="polite">Accept count: 0</p>
+<div class="row"><button data-command="paused">Paused</button><button data-command="unpaused">Unpaused</button><button data-command="secondary">Second view</button><button data-command="main">Main view</button><button data-command="compete">Competing focus</button><button data-command="reload">Reload page</button><button data-command="recreate">Destroy / recreate</button></div>
+<div id="state"></div><p class="note">Diagnostic fixture only. It changes no follower, outfit or relationship data. Native/hardware gates must be recorded separately.</p>
+</main>
+<section id="modal" role="dialog" aria-modal="true" hidden><h2>Nested scope</h2><p>B closes only this modal and restores the previous selection.</p><button id="modalAccept">Count once</button><button id="modalClose">Back</button></section>
+<script src="input-test.js"></script></body></html>

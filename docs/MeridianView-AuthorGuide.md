@@ -2,6 +2,11 @@
 
 `Meridian.View/1` is the compatibility interface for mods migrating from PrismaUI. Meridian UI remains a separately installed runtime; consumer mods ship only their SKSE DLL, their web assets, and the public headers they compiled against.
 
+For controller navigation, optional stick cursor, prompts, and opening shortcuts,
+query the separate [Meridian.Input/1 extension](MeridianInput-AuthorGuide.md).
+Controller capture requires explicit per-view opt-in. View/1's ABI and existing
+keyboard/mouse lifecycle remain compatible.
+
 ## Package layout
 
 For a consumer named `horde`, package the page as:

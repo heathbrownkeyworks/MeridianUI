@@ -51,3 +51,19 @@
 ; MeridianUI log verbosity: trace, debug, info, warn, error.
 ; Default: info
 ;LogLevel=info
+
+[Controller]
+; Input/1 views must also opt in. False overrides every view's enablement.
+;Enabled=true
+; Normalized stick thresholds. ExitDeadZone must be lower than DeadZone.
+;DeadZone=0.25
+;ExitDeadZone=0.18
+; Cursor speed at a 1080-pixel-tall view, scaled to current view height.
+;CursorSpeed=900
+; Repeat times in real seconds; only navigation repeats.
+;RepeatDelay=0.350
+;RepeatInterval=0.090
+; Xbox, PlayStation, or Generic. Translation layers may hide physical identity.
+;GlyphFamily=Xbox
+; Diagnostic controller IDs/values in MeridianUI.log. Normally leave disabled.
+;TraceInput=false

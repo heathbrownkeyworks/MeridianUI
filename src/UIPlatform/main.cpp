@@ -8,6 +8,7 @@
 #include "Controllers/NifSceneAPIController.h"
 #include "Controllers/RenderLayerAPIController.h"
 #include "Controllers/ViewAPIController.h"
+#include "Controllers/InputAPIController.h"
 #include "Config/IniConfig.h"
 #include "RuntimeCompatibility.h"
 
@@ -190,11 +191,12 @@ extern "C"
         *a_outInterface = nullptr;
 
         const bool isViewRequest = Meridian::UI::View::IsSupported(a_name, a_version);
+        const bool isInputRequest = Meridian::UI::Input::IsSupported(a_name, a_version);
         const bool isRenderLayerRequest = Meridian::UI::RenderLayer::IsSupported(a_name, a_version);
         const bool isNifViewRequest = Meridian::UI::NifView::IsSupported(a_name, a_version);
         const bool isNifSceneRequest = Meridian::UI::NifScene::IsSupported(a_name, a_version);
         if (!isViewRequest && !isRenderLayerRequest && !isNifViewRequest &&
-            !isNifSceneRequest)
+            !isNifSceneRequest && !isInputRequest)
         {
             spdlog::warn("Unsupported Meridian extension request '{}' version {} from '{}'",
                          a_name == nullptr ? "null" : a_name,
@@ -209,6 +211,14 @@ extern "C"
             return false;
         }
 
+        if (isInputRequest)
+        {
+            if (Meridian::Controllers::ViewAPIController::GetSingleton().IsShuttingDown()) return false;
+            *a_outInterface = static_cast<Meridian::UI::Input::IInputAPI*>(
+                &Meridian::Controllers::InputAPIController::GetSingleton());
+            spdlog::info("Meridian.Input/1 requested by '{}'", a_consumerName ? a_consumerName : "unknown");
+            return true;
+        }
         if (isViewRequest)
         {
             auto& viewController = Meridian::Controllers::ViewAPIController::GetSingleton();

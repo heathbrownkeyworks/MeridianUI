@@ -1,0 +1,68 @@
+#include "Input/ControllerState.h"
+#include <iostream>
+using namespace Meridian::Input;
+int main()
+{
+    int failures = 0;
+    auto check = [&](bool ok, const char* msg) { if (!ok) { ++failures; std::cerr << msg << '\n'; } };
+    ControllerState state;
+    auto first = state.Button(Control::South, 1);
+    check(!first.consume && first.phase == Phase::Press, "unfocused down passes");
+    state.SetOwner(1);
+    check(state.Button(Control::South, 1).phase == Phase::None, "opening hold cannot accept");
+    check(!state.Button(Control::South, 0).consume, "game owned release balances");
+    auto press = state.Button(Control::South, 1);
+    check(press.consume && press.phase == Phase::Press, "focused new press delivered");
+    state.SetOwner(0);
+    check(state.Button(Control::South, 1).consume, "held UI button suppressed after close");
+    check(state.Button(Control::South, 0).consume, "UI release stays suppressed");
+    check(!state.Button(Control::South, 1).consume, "fresh press returns to gameplay");
+    state.Button(Control::South, 0);
+    state.SetOwner(2);
+    state.Stick(Control::LeftStick, 0.1f, 0.1f);
+    check(state.Direction() == Control::None, "drift does not navigate");
+    state.Stick(Control::LeftStick, 0.9f, 0.2f);
+    check(state.Direction() == Control::DpadRight, "dominant cardinal direction");
+    check(state.Repeat(0.0) == Control::DpadRight, "immediate direction");
+    check(state.Repeat(0.2) == Control::None, "initial repeat delay");
+    check(state.Repeat(0.36) == Control::DpadRight, "delayed repeat");
+    state.Button(Control::DpadUp, 1);
+    check(state.Direction() == Control::DpadUp, "dpad overrides stick");
+    state.SetOwner(0);
+    check(state.Stick(Control::LeftStick, 1, 0).consume, "held stick suppressed on close");
+    check(state.Stick(Control::LeftStick, 0, 0).consume, "neutral ends suppression");
+    check(!state.Stick(Control::LeftStick, 1, 0).consume, "new stick returns to gameplay");
+    state.ResetDevice();
+    check(state.Direction() == Control::None, "disconnect clears axes and repeat");
+    state.SetOwner(3);
+    state.RequireNeutral();
+    check(state.Button(Control::East, 1).phase == Phase::None, "reconnect held button disarmed");
+    state.Button(Control::East, 0);
+    check(state.Button(Control::East, 1).phase == Phase::Press, "neutral reconnect rearms");
+    ControllerState movement;
+    check(!movement.Stick(Control::LeftStick, 1, 0).consume, "game-owned movement passes");
+    movement.SetOwner(1);
+    check(movement.Stick(Control::LeftStick, 1, 0).consume, "held game stick captured after focus");
+    check(!movement.Stick(Control::LeftStick, 0, 0).consume, "game-owned stick neutral balances during capture");
+    check(movement.Stick(Control::LeftStick, 1, 0).consume, "fresh focused stick captured");
+    movement.SetOwner(0);
+    check(movement.Stick(Control::LeftStick, 0, 0).consume, "UI-owned stick neutral stays captured after close");
+    movement.ResetDevice();
+    movement.Seed(Control::South, 0);
+    movement.Seed(Control::East, 1);
+    movement.SetOwner(2);
+    check(movement.Button(Control::South, 1).phase == Phase::Press, "neutral snapshot permits first fresh press");
+    check(movement.Button(Control::East, 1).phase == Phase::None, "held snapshot blocks reconnect cancel");
+    movement.Button(Control::East, 0);
+    check(movement.Button(Control::East, 1).phase == Phase::Press, "reconnected held control rearms after release");
+    movement.SetOwner(3);
+    check(movement.Button(Control::East, 1).phase == Phase::None, "focus transfer cannot replay held cancel");
+    movement.Button(Control::East, 0);
+    movement.Button(Control::East, 1);
+    Meridian::UI::Input::ViewInputConfig remapped;
+    remapped.bindings[0] = Control::East;
+    check(movement.Repeat(1, true, &remapped) == Control::DpadUp && movement.InitialRepeat(), "remapped direction emits initial action");
+    check(movement.Repeat(1.2, true, &remapped) == Control::None, "remapped direction respects delay");
+    check(movement.Repeat(1.4, true, &remapped) == Control::DpadUp && !movement.InitialRepeat(), "remapped direction repeats deliberately");
+    return failures ? 1 : 0;
+}

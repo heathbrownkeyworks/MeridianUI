@@ -454,6 +454,14 @@ namespace Meridian::CEF
                       static_cast<int>(status),
                       static_cast<std::uint32_t>(error_code),
                       error_string.ToString());
+        std::lock_guard dispatchLock(m_callbackDispatchMutex);
+        bool dispatch=false;
+        {
+            std::lock_guard stateLock(m_browserStateMutex);
+            dispatch=!m_quiesceRequested && !m_closeRequested && browser &&
+                m_cefBrowser && browser->IsSame(m_cefBrowser);
+        }
+        if(dispatch) onRendererTerminated();
     }
 
     bool MeridianCefClient::OnCursorChange(CefRefPtr<CefBrowser> browser,

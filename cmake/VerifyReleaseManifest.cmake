@@ -12,6 +12,8 @@ foreach(entry IN LISTS staged_entries)
     file(TO_CMAKE_PATH "${entry}" normalized)
     get_filename_component(name "${entry}" NAME)
     if(name MATCHES "^MeridianUITest(\\.dll|\\.pdb)?$" OR
+       name MATCHES "^MeridianInputTest(\\.dll|\\.pdb)?$" OR
+       normalized MATCHES "/[Mm]eridian[Ii]nput[Tt]est($|/)" OR
        name MATCHES "\\.pdb$" OR
        name MATCHES "\\.lastcodeanalysissucceeded$" OR
        name STREQUAL "enable_fixture.txt" OR
@@ -31,6 +33,10 @@ set(required_release_files
     "${ROOT}/MeridianUI/THIRD_PARTY_NOTICES.md"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/API.h"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/ViewAPI.h"
+    "${ROOT}/MeridianUI/SDK/MeridianUIAPI/InputAPI.h"
+    "${ROOT}/MeridianUI/SDK/MeridianUIAPI/InputDllLoader.h"
+    "${ROOT}/MeridianUI/docs/MeridianInput-AuthorGuide.md"
+    "${ROOT}/MeridianUI/docs/testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/RenderLayerAPI.h"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/NifViewAPI.h"
     "${ROOT}/MeridianUI/SDK/MeridianUIAPI/NifSceneAPI.h"

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PCH.h"
+#include "Input/ControllerCursorState.h"
+#include "Input/ControllerDeliveryState.h"
 #include "CEF/MeridianCefClient.h"
 #include "Services/CEFService.h"
 #include "Hooks/WinProcHook.h"
@@ -108,6 +110,11 @@ namespace Meridian::CEF
         std::atomic_bool m_closeRequested{false};
         // Set on any teardown path; gates the input entry points. Distinct from m_closeRequested, whose exchange-transition RequestClose consumes.
         std::atomic_bool m_shutdownStarted{false};
+        Meridian::Input::ControllerDeliveryState m_controllerDelivery;
+        // Only touched on CEF's UI thread.
+        Meridian::Input::PointerButtonState m_controllerMouseButton;
+        std::atomic_bool m_controllerReleaseQueued{false};
+        CefMouseEvent m_controllerMouseEvent{};
 
         sigslot::scoped_connection m_onWndInactive_Connection;
         sigslot::scoped_connection m_onIPCMessageReceived_Connection;
@@ -115,6 +122,7 @@ namespace Meridian::CEF
         sigslot::scoped_connection m_onBeforeBrowserClose_Connection;
         sigslot::scoped_connection m_onMainFrameLoadStart_Connection;
         sigslot::scoped_connection m_onMainFrameLoadEnd_Connection;
+        sigslot::scoped_connection m_onRendererTerminated_Connection;
 
     public:
         DefaultBrowser(std::shared_ptr<spdlog::logger> a_logger,
@@ -137,6 +145,11 @@ namespace Meridian::CEF
 
         void OnFocusGranted();
         void OnFocusRevoked();
+        std::uint64_t ControllerEpoch() const { return m_controllerDelivery.Epoch(); }
+        void InvalidateControllerInput();
+        bool SendControllerPacket(std::string a_json, std::uint64_t a_epoch);
+        void ControllerPointer(float a_dx, float a_dy, int a_button, std::uint64_t a_epoch);
+        void ReleaseControllerPointer();
         void SetTextInputActive(bool a_active);
         [[nodiscard]] bool IsTextInputActive() const;
         Meridian::UI::View::FocusResult TryViewFocus(Meridian::UI::View::FocusMode a_mode);

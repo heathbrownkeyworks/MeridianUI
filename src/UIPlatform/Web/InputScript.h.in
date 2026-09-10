@@ -1,0 +1,4 @@
+#pragma once
+namespace Meridian::Input {
+inline constexpr const char* BootstrapSource=R"MERIDIANINPUT(@MERIDIAN_INPUT_SCRIPT@)MERIDIANINPUT";
+}
