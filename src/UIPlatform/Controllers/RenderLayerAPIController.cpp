@@ -68,7 +68,7 @@ namespace Meridian::Controllers
         }
         catch (const std::exception& error)
         {
-            spdlog::error("{}: failed to initialize '{}': {}",
+            LOG_ERROR("{}: failed to initialize '{}': {}",
                           NameOf(RenderLayerAPIController), compositorName, error.what());
             if (addedToCompositor)
             {
@@ -80,7 +80,7 @@ namespace Meridian::Controllers
         }
         catch (...)
         {
-            spdlog::error("{}: failed to initialize '{}'", NameOf(RenderLayerAPIController), compositorName);
+            LOG_ERROR("{}: failed to initialize '{}'", NameOf(RenderLayerAPIController), compositorName);
             if (addedToCompositor)
             {
                 renderHost.RemoveSubMenu(compositorName);
@@ -113,7 +113,7 @@ namespace Meridian::Controllers
             else
             {
                 m_surfaces.emplace(handle, entry);
-                spdlog::info("{}: created {} as handle {}",
+                LOG_INFO("{}: created {} as handle {}",
                              NameOf(RenderLayerAPIController), compositorName, handle);
                 return handle;
             }

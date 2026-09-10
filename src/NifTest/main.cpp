@@ -7,7 +7,6 @@
 #include "MeridianUIAPI/NifViewDllLoader.h"
 #include "MeridianUIAPI/RenderLayerDllLoader.h"
 #include "MeridianUIAPI/ViewDllLoader.h"
-#include "RuntimeCompatibility.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -76,24 +75,14 @@ namespace
         return state;
     }
 
-    void InitializeLog()
+    [[nodiscard]] bool InitializeLog()
     {
-#ifdef _DEBUG
-        auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-#else
-        auto path = logger::log_directory();
-        if (!path)
-        {
-            SKSE::stl::report_and_fail("MeridianNifTest could not find the SKSE log directory"sv);
-        }
-        *path /= "MeridianNifTest.log";
-        auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-#endif
-        auto log = std::make_shared<spdlog::logger>("MeridianNifTest", std::move(sink));
-        log->set_level(spdlog::level::info);
-        log->flush_on(spdlog::level::info);
-        spdlog::set_default_logger(std::move(log));
-        spdlog::set_pattern("[%T.%e] [%^%l%$] : %v");
+        Meridian::Log::InitOptions options{};
+        options.name = "MeridianNifTest";
+        options.logFileStem = "MeridianNifTest.log";
+        options.pattern = "[%T.%e] [%^%l%$] : %v"s;
+        options.debugLevel = Meridian::Log::LogLevel::Info;
+        return Meridian::Log::Init(options) != nullptr;
     }
 
     bool QueueModel(std::string_view a_modelPath)
@@ -112,12 +101,12 @@ namespace
         load.frameOnLoad = true;
         if (!state.nifView->LoadModel(&load))
         {
-            spdlog::error("Meridian.NifView/1 rejected '{}'", stablePath);
+            LOG_ERROR("Meridian.NifView/1 rejected '{}'", stablePath);
             return false;
         }
 
         state.outfitActive = false;
-        spdlog::info("queued test mesh '{}' on surface {}", stablePath, state.surface);
+        LOG_INFO("queued test mesh '{}' on surface {}", stablePath, state.surface);
         return true;
     }
 
@@ -163,11 +152,11 @@ namespace
         load.frameOnLoad = !state.outfitActive;
         if (!state.nifScene->ReplaceWeightedScene(&load))
         {
-            spdlog::error("Meridian.NifScene/2 rejected the weighted hide outfit");
+            LOG_ERROR("Meridian.NifScene/2 rejected the weighted hide outfit");
             return false;
         }
         state.outfitActive = true;
-        spdlog::info("queued four-piece NIF-path hide outfit at weight {:.1f} on surface {}",
+        LOG_INFO("queued four-piece NIF-path hide outfit at weight {:.1f} on surface {}",
                      state.outfitWeight,
                      state.surface);
         return true;
@@ -190,11 +179,11 @@ namespace
                 return a_armor == nullptr;
             }))
         {
-            spdlog::error("could not resolve the {} armor record fixture", a_fixtureName);
+            LOG_ERROR("could not resolve the {} armor record fixture", a_fixtureName);
             return false;
         }
 
-        spdlog::info(
+        LOG_INFO(
             "using deterministic {} record fixture: race {:08X}, armors {:08X}, {:08X}, {:08X}, {:08X}",
             a_fixtureName,
             a_race->GetFormID(),
@@ -223,12 +212,12 @@ namespace
         load.frameOnLoad = !state.outfitActive;
         if (!state.nifScene->ReplaceArmorScene(&load))
         {
-            spdlog::error("Meridian.NifScene/3 rejected the {} armor-record hide outfit",
+            LOG_ERROR("Meridian.NifScene/3 rejected the {} armor-record hide outfit",
                           a_fixtureName);
             return false;
         }
         state.outfitActive = true;
-        spdlog::info("queued four-piece {} armor-record hide outfit at weight {:.1f} on surface {}",
+        LOG_INFO("queued four-piece {} armor-record hide outfit at weight {:.1f} on surface {}",
                      a_fixtureName,
                      state.outfitWeight,
                      state.surface);
@@ -253,7 +242,7 @@ namespace
         auto* race = RE::TESForm::LookupByID<RE::TESRace>(NORD_RACE_FORM_ID);
         if (dataHandler == nullptr)
         {
-            spdlog::error("could not access TESDataHandler for the BD Standalone fixture");
+            LOG_ERROR("could not access TESDataHandler for the BD Standalone fixture");
             return false;
         }
         const std::array armors{
@@ -282,7 +271,7 @@ namespace
             race == nullptr || armor == nullptr ||
             state.surface == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
         {
-            spdlog::error("could not resolve the {} {} fixture",
+            LOG_ERROR("could not resolve the {} {} fixture",
                           NIF_TEST_PLUGIN,
                           a_fixtureName);
             return false;
@@ -303,11 +292,11 @@ namespace
         load.frameOnLoad = !state.outfitActive;
         if (!state.nifScene->ReplaceArmorScene(&load))
         {
-            spdlog::error("Meridian.NifScene/3 rejected the {} fixture", a_fixtureName);
+            LOG_ERROR("Meridian.NifScene/3 rejected the {} fixture", a_fixtureName);
             return false;
         }
         state.outfitActive = true;
-        spdlog::info(
+        LOG_INFO(
             "queued one public object from {} armor {:08X} at weight {:.1f} on surface {}",
             a_fixtureName,
             armor->GetFormID(),
@@ -337,7 +326,7 @@ namespace
         if (!state.dataLoaded || state.nifScene == nullptr || taskInterface == nullptr ||
             state.surface == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
         {
-            spdlog::error("player-equipped outfit could not be queued");
+            LOG_ERROR("player-equipped outfit could not be queued");
             return false;
         }
 
@@ -361,14 +350,14 @@ namespace
             auto* race = player != nullptr ? player->GetRace() : nullptr;
             if (player == nullptr || base == nullptr || race == nullptr)
             {
-                spdlog::error("could not resolve the live player actor, base, or race");
+                LOG_ERROR("could not resolve the live player actor, base, or race");
                 return;
             }
 
             const auto sex = base->GetSex();
             if (sex != RE::SEX::kMale && sex != RE::SEX::kFemale)
             {
-                spdlog::error("player actor has unsupported sex {}", static_cast<std::uint32_t>(sex));
+                LOG_ERROR("player actor has unsupported sex {}", static_cast<std::uint32_t>(sex));
                 return;
             }
             const auto manifest = Meridian::NifTest::BuildEquippedArmorManifest(
@@ -382,7 +371,7 @@ namespace
                     Meridian::NifTest::EquippedArmorManifestError::None ||
                 manifest.items.empty())
             {
-                spdlog::warn("player-equipped outfit is empty or exceeds the {}-record cap",
+                LOG_WARN("player-equipped outfit is empty or exceeds the {}-record cap",
                              Meridian::UI::NifScene::MAX_SCENE_OBJECTS);
                 return;
             }
@@ -419,11 +408,11 @@ namespace
             load.frameOnLoad = frameOnLoad;
             if (!nifScene->ReplaceArmorScene(&load))
             {
-                spdlog::error("Meridian.NifScene/3 rejected the player-equipped outfit");
+                LOG_ERROR("Meridian.NifScene/3 rejected the player-equipped outfit");
                 return;
             }
 
-            spdlog::info(
+            LOG_INFO(
                 "queued player-equipped actor {:08X}: race {:08X}, sex {}, weight {:.1f}, {} unique armor records [{}]",
                 player->GetFormID(),
                 race->GetFormID(),
@@ -448,7 +437,7 @@ namespace
         if (!state.dataLoaded || state.nifScene == nullptr ||
             state.surface == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
         {
-            spdlog::error("player actor appearance could not be queued");
+            LOG_ERROR("player actor appearance could not be queued");
             return false;
         }
 
@@ -459,12 +448,12 @@ namespace
         load.frameOnLoad = !state.outfitActive;
         if (!state.nifScene->ReplaceActorAppearanceScene(&load))
         {
-            spdlog::error("Meridian.NifScene/4 rejected the player actor appearance");
+            LOG_ERROR("Meridian.NifScene/4 rejected the player actor appearance");
             return false;
         }
 
         state.outfitActive = true;
-        spdlog::info("queued live player actor appearance {:08X} on surface {}",
+        LOG_INFO("queued live player actor appearance {:08X} on surface {}",
                      load.actorFormID,
                      state.surface);
         return true;
@@ -531,13 +520,13 @@ namespace
         if (!parsed || state.renderLayers == nullptr ||
             state.surface == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
         {
-            spdlog::warn("rejected preview layout payload");
+            LOG_WARN("rejected preview layout payload");
             return;
         }
         if (!state.renderLayers->SetRect(
                 state.surface, parsed->x, parsed->y, parsed->width, parsed->height))
         {
-            spdlog::warn("rejected preview layout rectangle {},{},{},{}",
+            LOG_WARN("rejected preview layout rectangle {},{},{},{}",
                          parsed->x,
                          parsed->y,
                          parsed->width,
@@ -546,7 +535,7 @@ namespace
         }
         state.layoutReady = true;
         state.renderLayers->SetVisible(state.surface, state.testVisible);
-        spdlog::info("applied preview layout {},{},{},{}",
+        LOG_INFO("applied preview layout {},{},{},{}",
                      parsed->x,
                      parsed->y,
                      parsed->width,
@@ -568,7 +557,7 @@ namespace
         const auto modelPath = Meridian::NifTest::ParseModelPathPayload(a_payload);
         if (!modelPath)
         {
-            spdlog::warn("rejected invalid model selector payload");
+            LOG_WARN("rejected invalid model selector payload");
             return;
         }
         QueueModel(*modelPath);
@@ -587,7 +576,7 @@ namespace
         state.camera.exposureStops = parsed->exposureStops;
         if (!state.nifView->SetCamera(state.surface, &state.camera))
         {
-            spdlog::warn("Meridian.NifView/1 rejected lighting state");
+            LOG_WARN("Meridian.NifView/1 rejected lighting state");
         }
     }
 
@@ -652,7 +641,7 @@ namespace
         const auto weight = Meridian::NifTest::ParseWeightPayload(a_payload);
         if (!weight)
         {
-            spdlog::warn("rejected invalid Skyrim weight payload");
+            LOG_WARN("rejected invalid Skyrim weight payload");
             return;
         }
         auto& state = State();
@@ -681,7 +670,7 @@ namespace
         if (!state.nifScene->SetObjectVisible(
                 state.surface, parsed->object, parsed->visible))
         {
-            spdlog::warn("Meridian.NifScene/1 rejected object visibility state");
+            LOG_WARN("Meridian.NifScene/1 rejected object visibility state");
             return;
         }
         constexpr std::array handles{
@@ -701,7 +690,7 @@ namespace
         auto& state = State();
         if (state.views == nullptr || state.view == Meridian::UI::View::INVALID_VIEW_HANDLE)
         {
-            spdlog::warn("Alt+N ignored because the standalone NIF view is not ready");
+            LOG_WARN("Alt+N ignored because the standalone NIF view is not ready");
             return;
         }
 
@@ -709,7 +698,7 @@ namespace
         {
             if (!state.views->Show(state.view))
             {
-                spdlog::warn("Alt+N could not show the standalone NIF view");
+                LOG_WARN("Alt+N could not show the standalone NIF view");
                 return;
             }
             state.testVisible = true;
@@ -720,7 +709,7 @@ namespace
             }
             const auto focus = state.views->TryFocus(
                 state.view, Meridian::UI::View::FocusMode::PauseGame);
-            spdlog::info("Alt+N opened the standalone NIF view; focus result {}",
+            LOG_INFO("Alt+N opened the standalone NIF view; focus result {}",
                          static_cast<std::uint32_t>(focus));
             return;
         }
@@ -733,7 +722,7 @@ namespace
         {
             state.renderLayers->SetVisible(state.surface, false);
         }
-        spdlog::info("standalone NIF view hidden; focus and native surface released");
+        LOG_INFO("standalone NIF view hidden; focus and native surface released");
     }
 
     void __cdecl CloseTestFromPage(const char*)
@@ -753,12 +742,12 @@ namespace
         {
             const auto focus = state.views->TryFocus(
                 state.view, Meridian::UI::View::FocusMode::PauseGame);
-            spdlog::info("camera controls ready; focus result {}",
+            LOG_INFO("camera controls ready; focus result {}",
                          static_cast<std::uint32_t>(focus));
         }
         else
         {
-            spdlog::info("camera controls ready and hidden; press Alt+N to open");
+            LOG_INFO("camera controls ready and hidden; press Alt+N to open");
         }
     }
 
@@ -781,7 +770,7 @@ namespace
         state.view = state.views->CreateView(&info);
         if (state.view == Meridian::UI::View::INVALID_VIEW_HANDLE)
         {
-            spdlog::error("failed to create the standalone NIF camera control view");
+            LOG_ERROR("failed to create the standalone NIF camera control view");
             return;
         }
 
@@ -827,13 +816,13 @@ namespace
             !weightRegistered || !syncWeightRegistered ||
             !visibilityRegistered || !closeRegistered)
         {
-            spdlog::error("failed to register one or more NIF camera control listeners");
+            LOG_ERROR("failed to register one or more NIF camera control listeners");
             state.views->DestroyView(state.view);
             state.view = Meridian::UI::View::INVALID_VIEW_HANDLE;
             return;
         }
 
-        spdlog::info("created camera control view {} from '{}'", state.view, VIEW_URL);
+        LOG_INFO("created camera control view {} from '{}'", state.view, VIEW_URL);
     }
 
     void QueryAPIs()
@@ -852,11 +841,11 @@ namespace
         if (state.renderLayers == nullptr || state.nifView == nullptr ||
             state.nifScene == nullptr)
         {
-            spdlog::error("Meridian.RenderLayer/1, Meridian.NifView/1, or Meridian.NifScene/4 is unavailable; install/enable the current Meridian UI build");
+            LOG_ERROR("Meridian.RenderLayer/1, Meridian.NifView/1, or Meridian.NifScene/4 is unavailable; install/enable the current Meridian UI build");
         }
         if (state.views == nullptr)
         {
-            spdlog::error("Meridian.View/1 is unavailable; native NIF preview will continue without controls");
+            LOG_ERROR("Meridian.View/1 is unavailable; native NIF preview will continue without controls");
         }
     }
 
@@ -889,11 +878,11 @@ namespace
         state.surface = state.renderLayers->CreateSurface(&surfaceInfo);
         if (state.surface == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
         {
-            spdlog::error("failed to create the standalone Meridian NIF test surface");
+            LOG_ERROR("failed to create the standalone Meridian NIF test surface");
             return;
         }
 
-        spdlog::info("created standalone NIF test surface {}", state.surface);
+        LOG_INFO("created standalone NIF test surface {}", state.surface);
         TryQueueInitialModel();
     }
 
@@ -922,12 +911,12 @@ namespace
             auto* input = RE::BSInputDeviceManager::GetSingleton();
             if (input == nullptr)
             {
-                spdlog::error("could not register the Alt+N input sink");
+                LOG_ERROR("could not register the Alt+N input sink");
                 return;
             }
             input->AddEventSink(this);
             registered = true;
-            spdlog::info("registered Alt+N standalone NIF view toggle");
+            LOG_INFO("registered Alt+N standalone NIF view toggle");
         }
 
         RE::BSEventNotifyControl ProcessEvent(
@@ -985,24 +974,6 @@ namespace
     }
 }
 
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version =
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME);
-
-static_assert(Meridian::RuntimeCompatibility::HasAddressLibraryV5(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME)));
-static_assert(Meridian::RuntimeCompatibility::HasUpdatedStructs(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME)));
-
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(
-    const SKSE::QueryInterface* a_skse,
-    SKSE::PluginInfo* a_info)
-{
-    a_info->infoVersion = SKSE::PluginInfo::kVersion;
-    a_info->name = PLUGIN_NAME;
-    a_info->version = 1;
-    return !a_skse->IsEditor() && a_skse->RuntimeVersion() >= SKSE::RUNTIME_SSE_1_5_39;
-}
-
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
     if (a_skse->IsEditor())
@@ -1010,14 +981,20 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
         return false;
     }
 
-    SKSE::Init(a_skse);
-    InitializeLog();
-    if (!SKSE::GetMessagingInterface()->RegisterListener(ProcessMessage))
+    SKSE::Init(a_skse, false);
+    if (!InitializeLog())
     {
-        spdlog::critical("failed to register the SKSE lifecycle listener");
         return false;
     }
 
-    spdlog::info("standalone test loaded; Horde is not used or modified");
+    LOG_INFO("{} {} Plugin Loaded", Meridian::UI::LibVersion::PROJECT_NAME,Meridian::UI::LibVersion::AS_STRING);
+
+    if (!SKSE::GetMessagingInterface()->RegisterListener(ProcessMessage))
+    {
+        LOG_CRITICAL("failed to register the SKSE lifecycle listener");
+        return false;
+    }
+
+    LOG_INFO("standalone test loaded; Horde is not used or modified");
     return true;
 }

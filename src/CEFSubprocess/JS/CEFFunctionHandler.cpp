@@ -6,7 +6,7 @@ namespace Meridian::JS
     {
         if (a_browser == nullptr)
         {
-            spdlog::error("{}: browser is nullptr", NameOf(CEFFunctionHandler));
+            LOG_ERROR("{}: browser is nullptr", NameOf(CEFFunctionHandler));
         }
 
         m_browser = a_browser;
@@ -32,7 +32,7 @@ namespace Meridian::JS
 
             if (!exception.empty())
             {
-                spdlog::error("{}: {}", NameOf(CEFFunctionHandler::Execute), exception.ToString());
+                LOG_ERROR("{}: {}", NameOf(CEFFunctionHandler::Execute), exception.ToString());
                 if (firstException.empty())
                 {
                     firstException = exception;
@@ -44,7 +44,7 @@ namespace Meridian::JS
         exception = firstException;
         for (const auto& it : warnMap)
         {
-            spdlog::warn("{} ({})", it.first.c_str(), it.second);
+            LOG_WARN("{} ({})", it.first.c_str(), it.second);
         }
 
         messageArgs->SetString(0, m_objectName);

@@ -14,7 +14,7 @@ namespace Meridian::Render
 
         if (a_renderData->platformDevice == nullptr)
         {
-            spdlog::error("{}: no platform device — ring renderer cannot start", NameOf(CEFRingRenderLayer));
+            LOG_ERROR("{}: no platform device — ring renderer cannot start", NameOf(CEFRingRenderLayer));
             return;
         }
 
@@ -28,7 +28,7 @@ namespace Meridian::Render
         }
         else
         {
-            spdlog::error("{}: transport initialization failed", NameOf(CEFRingRenderLayer));
+            LOG_ERROR("{}: transport initialization failed", NameOf(CEFRingRenderLayer));
         }
 
         m_popupTransportReady.store(m_popupTransport.Initialize(*a_renderData->platformDevice, a_renderData->device, 1, 1), std::memory_order_release);
@@ -114,7 +114,7 @@ namespace Meridian::Render
                                      const RectList& dirtyRects, const void* buffer,
                                      int width, int height)
     {
-        spdlog::error("{}: unexpected software OnPaint", NameOf(CEFRingRenderLayer));
+        LOG_ERROR("{}: unexpected software OnPaint", NameOf(CEFRingRenderLayer));
     }
 
     void CEFRingRenderLayer::OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
@@ -148,7 +148,7 @@ namespace Meridian::Render
             info.shared_texture_handle, IID_PPV_ARGS(cefTexture.GetAddressOf()));
         if (FAILED(hr))
         {
-            spdlog::error("{}: OpenSharedResource1 on CEF frame failed, code {:X}", NameOf(CEFRingRenderLayer), hr);
+            LOG_ERROR("{}: OpenSharedResource1 on CEF frame failed, code {:X}", NameOf(CEFRingRenderLayer), hr);
             return;
         }
 

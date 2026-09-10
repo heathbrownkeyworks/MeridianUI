@@ -47,11 +47,11 @@ namespace Meridian::Menus
             REL::Relocation<std::uintptr_t> vTable(RE::VTABLE_CursorMenu[0]);
             s_processMessage = vTable.write_vfunc(0x4, &CursorMenuEx::ProcessMessage_Hook);
             s_advanceMovie = vTable.write_vfunc(0x5, &CursorMenuEx::AdvanceMovie_Hook);
-            spdlog::info("{}: CursorMenu ProcessMessage and AdvanceMovie hooks installed", NameOf(CursorMenuEx));
+            LOG_INFO("{}: CursorMenu ProcessMessage and AdvanceMovie hooks installed", NameOf(CursorMenuEx));
         }
         catch (const std::exception& e)
         {
-            spdlog::error("{}: install FAILED ({}) — cursor focus arbitration unavailable", NameOf(CursorMenuEx), e.what());
+            LOG_ERROR("{}: install FAILED ({}) — cursor focus arbitration unavailable", NameOf(CursorMenuEx), e.what());
         }
     }
 }

@@ -1,15 +1,8 @@
-#vcpkg_from_github(
-#    OUT_SOURCE_PATH SOURCE_PATH
-#    REPO alandtse/CommonLibSSE-NG
-#    REF 8b032fa992750d654d6d38a33731714d8b86be1f
-#    SHA512 9def8a8e954fca898f0c57481a5b6415ea53481b59ff66b5982bb1f63cb847aacf2b85ab021a7e26cdb9df7689534621e5c81fb43477fea1d3135e27a44391b6
-#    HEAD_REF ng
-#)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO alandtse/CommonLibSSE-NG
-    REF 9b17b42fc9db23aea2b60f92690e778784e612b1
-    SHA512 25a4c65ebd3c2d34a3e4a8fd1625e73a15563d4af467eb984360381e36bde69fd8abe0225f4a3fda88ede6fd533e5a5fb3fd272fbeedf54e047f8f7fbed548c4
+    REF bedcb1e05418baba7b316a650b6180c2dd6007a8
+    SHA512 6c9eb136546f816a23bd3a1c010216eaa4383cf8ca9b3a125161dfd5d17c657c258b680d8e3a90437857505a6f2373a8d53d3952a22aa476e8fcad05e8a2fb50
     HEAD_REF ng
 )
 vcpkg_from_github(
@@ -49,7 +42,7 @@ vcpkg_cmake_configure(
         -DSKSE_SUPPORT_PATCH_SAFETY=on
         -DENABLE_SKYRIM_SE=on
         -DENABLE_SKYRIM_AE=on
-        -DENABLE_SKYRIM_VR=off
+        -DENABLE_SKYRIM_VR=on
         "-DFETCHCONTENT_SOURCE_DIR_HDE64=${HDE64_SOURCE_PATH}"
 )
 
@@ -79,8 +72,7 @@ file(REMOVE_RECURSE
 
 vcpkg_install_copyright(
     FILE_LIST
-        "${SOURCE_PATH}/COPYING"
+        "${SOURCE_PATH}/COPYING.txt"
         "${SOURCE_PATH}/EXCEPTIONS.md"
-        "${SOURCE_PATH}/licenses/LICENSE-MIT"
         "${HDE64_SOURCE_PATH}/LICENSE.txt"
 )

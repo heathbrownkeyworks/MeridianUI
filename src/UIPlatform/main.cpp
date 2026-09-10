@@ -10,80 +10,33 @@
 #include "Controllers/ViewAPIController.h"
 #include "Controllers/InputAPIController.h"
 #include "Config/IniConfig.h"
-#include "RuntimeCompatibility.h"
 
 inline void ShowMessageBox(const char* a_msg)
 {
     MessageBoxA(0, a_msg, "ERROR", MB_ICONERROR);
 }
 
-void InitDefaultLog()
+[[nodiscard]] bool InitDefaultLog()
 {
-#ifdef _DEBUG
-    const auto level = spdlog::level::trace;
-    auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-#else
-    const auto level = spdlog::level::info;
-    auto path = logger::log_directory();
-    if (!path)
-    {
-        SKSE::stl::report_and_fail("Failed to find standard logging directory"sv);
-    }
-
-    *path /= fmt::format("{}.log"sv, Meridian::UI::LibVersion::PROJECT_NAME);
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-#endif
-
-    auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-    log->set_level(level);
-    log->flush_on(level);
-
-    spdlog::set_default_logger(std::move(log));
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
+    Meridian::Log::InitOptions options{};
+    options.name = "global log"s;
+    options.logFileStem = fmt::format("{}.log", Meridian::UI::LibVersion::PROJECT_NAME);
+    options.makeDefault = true;
+    return Meridian::Log::Init(options) != nullptr;
 }
 
-void InitCefSubprocessLog()
+[[nodiscard]] bool InitCefSubprocessLog()
 {
-#ifdef _DEBUG
-    const auto level = spdlog::level::trace;
-    auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-#else
-    const auto level = spdlog::level::info;
-    auto path = logger::log_directory();
-    if (!path)
-    {
-        SKSE::stl::report_and_fail("Failed to find standard logging directory"sv);
-    }
-
-    *path /= fmt::format("{}.log"sv, NL_UI_SUBPROC_NAME);
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-#endif
-
-    auto log = std::make_shared<spdlog::logger>(NL_UI_SUBPROC_NAME, std::move(sink));
-    log->set_level(level);
-    log->flush_on(level);
-    log->set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
-
-    spdlog::register_logger(std::move(log));
+    Meridian::Log::InitOptions options{};
+    options.name = NL_UI_SUBPROC_NAME;
+    options.logFileStem = fmt::format("{}.log", NL_UI_SUBPROC_NAME);
+    options.makeDefault = false;
+    return Meridian::Log::Init(options) != nullptr;
 }
 
 extern "C"
 {
-    DLLEXPORT constinit auto SKSEPlugin_Version =
-        Meridian::RuntimeCompatibility::MakePluginVersionData(
-            Meridian::UI::LibVersion::AS_INT,
-            Meridian::UI::LibVersion::PROJECT_NAME);
-
-    static_assert(Meridian::RuntimeCompatibility::HasAddressLibraryV5(
-        Meridian::RuntimeCompatibility::MakePluginVersionData(
-            Meridian::UI::LibVersion::AS_INT,
-            Meridian::UI::LibVersion::PROJECT_NAME)));
-    static_assert(Meridian::RuntimeCompatibility::HasUpdatedStructs(
-        Meridian::RuntimeCompatibility::MakePluginVersionData(
-            Meridian::UI::LibVersion::AS_INT,
-            Meridian::UI::LibVersion::PROJECT_NAME)));
-
-    DLLEXPORT bool SKSEAPI Entry(const SKSE::LoadInterface* a_skse)
+    DLLEXPORT bool Entry(const SKSE::LoadInterface* a_skse)
     {
         if (a_skse->IsEditor())
         {
@@ -95,18 +48,25 @@ extern "C"
             // SKSE (a_log = false, we set up our own loggers below)
             SKSE::Init(a_skse, false);
             SKSE::AllocTrampoline(1024);
-            InitDefaultLog();
+            if (!InitDefaultLog())
+            {
+                ShowMessageBox("Failed to initialize MeridianUI logging");
+                return false;
+            }
 
             const auto& ini = Meridian::Config::LoadIniOverrides();
             if (ini.logLevel)
             {
-                const auto logLevel = static_cast<spdlog::level::level_enum>(*ini.logLevel);
-                spdlog::default_logger()->set_level(logLevel);
-                spdlog::default_logger()->flush_on(logLevel);
+                Meridian::Log::SetLevel(*ini.logLevel);
             }
 
-            InitCefSubprocessLog();
+            if (!InitCefSubprocessLog())
+            {
+                LOG_WARN("Failed to initialize the CEF subprocess log relay; subprocess log lines will be dropped");
+            }
 
+            LOG_INFO("{} {} Plugin Loaded", Meridian::UI::LibVersion::PROJECT_NAME,Meridian::UI::LibVersion::AS_STRING);
+            
             // Hooks
             Meridian::Hooks::WinProcHook::Install();
             Meridian::Hooks::InputDispatchHook::Install();  // early layer preserves the original sink contract
@@ -156,11 +116,11 @@ extern "C"
                                                             const char* a_requestLibName)
     {
         const auto thisLibVer = GetUIPlatformAPIVersion();
-        spdlog::info("MeridianUI version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(thisLibVer.libVersion), Meridian::UI::LibVersion::GetMinorVersion(thisLibVer.libVersion));
+        LOG_INFO("MeridianUI version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(thisLibVer.libVersion), Meridian::UI::LibVersion::GetMinorVersion(thisLibVer.libVersion));
 
         if (!Meridian::UI::APIVersion::IsCompatible(a_requestApiVersion))
         {
-            spdlog::error("Can't return API for \"{}\", our ver is {}.{} and their ver is {}.{}",
+            LOG_ERROR("Can't return API for \"{}\", our ver is {}.{} and their ver is {}.{}",
                           a_requestLibName == nullptr ? "null" : a_requestLibName,
                           Meridian::UI::APIVersion::MAJOR,
                           Meridian::UI::APIVersion::MINOR,
@@ -169,7 +129,7 @@ extern "C"
             return false;
         }
 
-        spdlog::info("API requested by \"{}\", our ver is {}.{} and their ver is {}.{}",
+        LOG_INFO("API requested by \"{}\", our ver is {}.{} and their ver is {}.{}",
                      a_requestLibName == nullptr ? "null" : a_requestLibName,
                      Meridian::UI::APIVersion::MAJOR,
                      Meridian::UI::APIVersion::MINOR,
@@ -198,7 +158,7 @@ extern "C"
         if (!isViewRequest && !isRenderLayerRequest && !isNifViewRequest &&
             !isNifSceneRequest && !isInputRequest)
         {
-            spdlog::warn("Unsupported Meridian extension request '{}' version {} from '{}'",
+            LOG_WARN("Unsupported Meridian extension request '{}' version {} from '{}'",
                          a_name == nullptr ? "null" : a_name,
                          a_version,
                          a_consumerName == nullptr ? "unknown" : a_consumerName);
@@ -228,7 +188,7 @@ extern "C"
             }
 
             *a_outInterface = static_cast<Meridian::UI::View::IViewAPI*>(&viewController);
-            spdlog::info("Meridian.View/1 requested by '{}'",
+            LOG_INFO("Meridian.View/1 requested by '{}'",
                          a_consumerName == nullptr ? "unknown" : a_consumerName);
             return true;
         }
@@ -242,7 +202,7 @@ extern "C"
             }
 
             *a_outInterface = static_cast<Meridian::UI::NifView::INifViewAPI*>(&nifViewController);
-            spdlog::info("Meridian.NifView/1 requested by '{}'",
+            LOG_INFO("Meridian.NifView/1 requested by '{}'",
                          a_consumerName == nullptr ? "unknown" : a_consumerName);
             return true;
         }
@@ -259,28 +219,28 @@ extern "C"
             {
                 *a_outInterface = static_cast<Meridian::UI::NifScene::INifSceneAPI4*>(
                     &nifSceneController);
-                spdlog::info("Meridian.NifScene/4 requested by '{}'",
+                LOG_INFO("Meridian.NifScene/4 requested by '{}'",
                              a_consumerName == nullptr ? "unknown" : a_consumerName);
             }
             else if (a_version == Meridian::UI::NifScene::ARMOR_INTERFACE_VERSION)
             {
                 *a_outInterface = static_cast<Meridian::UI::NifScene::INifSceneAPI3*>(
                     &nifSceneController);
-                spdlog::info("Meridian.NifScene/3 requested by '{}'",
+                LOG_INFO("Meridian.NifScene/3 requested by '{}'",
                              a_consumerName == nullptr ? "unknown" : a_consumerName);
             }
             else if (a_version == Meridian::UI::NifScene::WEIGHTED_INTERFACE_VERSION)
             {
                 *a_outInterface = static_cast<Meridian::UI::NifScene::INifSceneAPI2*>(
                     &nifSceneController);
-                spdlog::info("Meridian.NifScene/2 requested by '{}'",
+                LOG_INFO("Meridian.NifScene/2 requested by '{}'",
                              a_consumerName == nullptr ? "unknown" : a_consumerName);
             }
             else
             {
                 *a_outInterface = static_cast<Meridian::UI::NifScene::INifSceneAPI*>(
                     &nifSceneController);
-                spdlog::info("Meridian.NifScene/1 requested by '{}'",
+                LOG_INFO("Meridian.NifScene/1 requested by '{}'",
                              a_consumerName == nullptr ? "unknown" : a_consumerName);
             }
             return true;
@@ -293,7 +253,7 @@ extern "C"
         }
 
         *a_outInterface = static_cast<Meridian::UI::RenderLayer::IRenderLayerAPI*>(&renderLayerController);
-        spdlog::info("Meridian.RenderLayer/1 requested by '{}'",
+        LOG_INFO("Meridian.RenderLayer/1 requested by '{}'",
                      a_consumerName == nullptr ? "unknown" : a_consumerName);
         return true;
     }

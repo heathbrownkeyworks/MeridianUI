@@ -60,7 +60,7 @@ namespace Meridian::UI::TestCase
         echoFast.executeInGameThread = false;
         echoFast.callback = [](const char** a_args, int a_argsCount, JS::IJSPromiseResolver* a_resolver) {
             const auto argsJson = ArgsToJsonArray(a_args, a_argsCount);
-            spdlog::info("meridianTest.echoFast callback invoked. args: {}", argsJson);
+            LOG_INFO("meridianTest.echoFast callback invoked. args: {}", argsJson);
             a_resolver->Resolve(fmt::format(R"({{"echo":{},"path":"fast"}})", argsJson).c_str());
         };
         m_browser->AddPromiseFunctionCallback(echoFast);
@@ -71,7 +71,7 @@ namespace Meridian::UI::TestCase
         echoSlow.executeInGameThread = true;
         echoSlow.callback = [](const char** a_args, int a_argsCount, JS::IJSPromiseResolver* a_resolver) {
             const auto argsJson = ArgsToJsonArray(a_args, a_argsCount);
-            spdlog::info("meridianTest.echoSlow callback invoked (game thread). args: {}", argsJson);
+            LOG_INFO("meridianTest.echoSlow callback invoked (game thread). args: {}", argsJson);
 
             // Exercises the resolver's any-thread/any-time contract with a
             // genuinely independent thread rather than the SKSE task/timer
@@ -94,12 +94,12 @@ namespace Meridian::UI::TestCase
         alwaysReject.funcName = "alwaysReject";
         alwaysReject.executeInGameThread = false;
         alwaysReject.callback = [](const char** a_args, int a_argsCount, JS::IJSPromiseResolver* a_resolver) {
-            spdlog::info("meridianTest.alwaysReject callback invoked. argsCount: {}", a_argsCount);
+            LOG_INFO("meridianTest.alwaysReject callback invoked. argsCount: {}", a_argsCount);
             a_resolver->Reject("intentional test rejection");
         };
         m_browser->AddPromiseFunctionCallback(alwaysReject);
 
-        spdlog::info("{}: registered promise natives meridianTest.{{echoFast, echoSlow, alwaysReject}}",
+        LOG_INFO("{}: registered promise natives meridianTest.{{echoFast, echoSlow, alwaysReject}}",
                      NameOf(LocalTestPage));
     }
 
@@ -120,7 +120,7 @@ namespace Meridian::UI::TestCase
                 argsStr += fmt::format("{}{}", (i > 0 ? ", " : ""), a_args[i]);
             }
 
-            spdlog::info("func1 callback. params: {}", argsStr);
+            LOG_INFO("func1 callback. params: {}", argsStr);
         };
 
         // func2
@@ -135,7 +135,7 @@ namespace Meridian::UI::TestCase
                 argsStr += fmt::format("{}{}", (i > 0 ? ", " : ""), a_args[i]);
             }
 
-            spdlog::info("func2 callback. params: {}", argsStr);
+            LOG_INFO("func2 callback. params: {}", argsStr);
         };
 
         // Event func
@@ -149,7 +149,7 @@ namespace Meridian::UI::TestCase
         m_funcInfoVector.push_back(func3);
 
         constexpr const char* testPageURL = "mod://MeridianUITest/index.html";
-        spdlog::info("{}: loading offline fixture {}", NameOf(LocalTestPage), testPageURL);
+        LOG_INFO("{}: loading offline fixture {}", NameOf(LocalTestPage), testPageURL);
 
         m_browserHandle = a_api->AddOrGetBrowser("LOCAL_TEST_PAGE",
                                                  m_funcInfoVector.data(),
@@ -159,13 +159,13 @@ namespace Meridian::UI::TestCase
 
         if (m_browserHandle == Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle)
         {
-            spdlog::error("{}: browser handle is invalid", NameOf(LocalTestPage));
+            LOG_ERROR("{}: browser handle is invalid", NameOf(LocalTestPage));
             return;
         }
 
         if (m_browser == nullptr)
         {
-            spdlog::error("{}: browser is nullptr", NameOf(LocalTestPage));
+            LOG_ERROR("{}: browser is nullptr", NameOf(LocalTestPage));
             return;
         }
 
@@ -181,7 +181,7 @@ namespace Meridian::UI::TestCase
         // mod://, using a second browser to exercise independent host pinning
         // and overlapping compositor geometry.
         constexpr const char* kModTestPageURL = "mod://MeridianUITest/index.html";
-        spdlog::info("{}: second browser loading via mod:// scheme: {}", NameOf(LocalTestPage), kModTestPageURL);
+        LOG_INFO("{}: second browser loading via mod:// scheme: {}", NameOf(LocalTestPage), kModTestPageURL);
 
         m_browserHandle2 = a_api->AddOrGetBrowser("LOCAL_TEST_PAGE_2",
                                                   nullptr,
@@ -194,11 +194,11 @@ namespace Meridian::UI::TestCase
             m_browser2->SetBrowserResolutionScale(0.5f);
             m_browser2->SetBrowserZOrder(10);
             m_browser2->ToggleBrowserFocusByKeys(RE::BSKeyboardDevice::Keys::kF7, 0);
-            spdlog::info("{}: second browser at (80,80 640x360) scale 0.5 z 10", NameOf(LocalTestPage));
+            LOG_INFO("{}: second browser at (80,80 640x360) scale 0.5 z 10", NameOf(LocalTestPage));
         }
         else
         {
-            spdlog::error("{}: second browser creation failed", NameOf(LocalTestPage));
+            LOG_ERROR("{}: second browser creation failed", NameOf(LocalTestPage));
         }
 
         m_printThread = std::jthread([this](std::stop_token a_stopToken) {
@@ -213,7 +213,7 @@ namespace Meridian::UI::TestCase
                         argsStr += fmt::format("{}{}", (i > 0 ? ", " : ""), a_args[i]);
                     }
 
-                    spdlog::info("func1__ callback. params: {}", argsStr);
+                    LOG_INFO("func1__ callback. params: {}", argsStr);
                 };
                 m_browser->AddFunctionCallback(strFunInfo);
             }
@@ -229,7 +229,7 @@ namespace Meridian::UI::TestCase
                         argsStr += fmt::format("{}{}", (i > 0 ? ", " : ""), a_args[i]);
                     }
 
-                    spdlog::info("func2__ callback. params: {}", argsStr);
+                    LOG_INFO("func2__ callback. params: {}", argsStr);
                 };
                 m_browser->AddFunctionCallback(strFunInfo);
             }
@@ -275,7 +275,7 @@ namespace Meridian::UI::TestCase
                     return;
                 }
 
-                spdlog::info("{}: starting warm browser release/recreate", NameOf(LocalTestPage));
+                LOG_INFO("{}: starting warm browser release/recreate", NameOf(LocalTestPage));
                 if (m_browserHandle != Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle)
                 {
                     m_api->ReleaseBrowserHandle(m_browserHandle);
@@ -290,7 +290,7 @@ namespace Meridian::UI::TestCase
                                                          m_browser);
                 if (m_browserHandle == Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle || m_browser == nullptr)
                 {
-                    spdlog::error("{}: warm browser recreate failed", NameOf(LocalTestPage));
+                    LOG_ERROR("{}: warm browser recreate failed", NameOf(LocalTestPage));
                     recreatePromise->set_value(false);
                     return;
                 }
@@ -328,11 +328,11 @@ namespace Meridian::UI::TestCase
 
             if (m_browser == nullptr || !m_browser->IsPageLoaded())
             {
-                spdlog::error("{}: replacement page did not load within 30 seconds", NameOf(LocalTestPage));
+                LOG_ERROR("{}: replacement page did not load within 30 seconds", NameOf(LocalTestPage));
                 return;
             }
 
-            spdlog::info("{}: warm browser release/recreate complete; replacement loaded and retained for exit drain",
+            LOG_INFO("{}: warm browser release/recreate complete; replacement loaded and retained for exit drain",
                          NameOf(LocalTestPage));
 
             // Remove-binding acceptance check: func1 must become uncallable while func2 stays bound.
@@ -345,7 +345,7 @@ namespace Meridian::UI::TestCase
             }
 
             m_browser->ExecuteJavaScript("try { NL.func1(1); NL.func2('remove-check: func1 STILL CALLABLE'); } catch (e) { NL.func2('remove-check: ' + e.name); }");
-            spdlog::info("{}: remove-binding check dispatched; expect func2 callback logging 'remove-check: TypeError'", NameOf(LocalTestPage));
+            LOG_INFO("{}: remove-binding check dispatched; expect func2 callback logging 'remove-check: TypeError'", NameOf(LocalTestPage));
         });
     }
 
@@ -356,7 +356,7 @@ namespace Meridian::UI::TestCase
             return;
         }
 
-        spdlog::info("LocalTestPage::Shutdown");
+        LOG_INFO("LocalTestPage::Shutdown");
 
         if (m_printThread.joinable())
         {
@@ -370,7 +370,7 @@ namespace Meridian::UI::TestCase
             // central shutdown coordinator must close and drain it before CefShutdown.
             m_browserHandle = Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             m_browser = nullptr;
-            spdlog::info("{}: retained offline browser for platform shutdown drain", NameOf(LocalTestPage));
+            LOG_INFO("{}: retained offline browser for platform shutdown drain", NameOf(LocalTestPage));
         }
 
         if (m_api != nullptr && m_browserHandle2 != Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle)
@@ -379,7 +379,7 @@ namespace Meridian::UI::TestCase
             // coordinator closes and drains this browser before CefShutdown.
             m_browserHandle2 = Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             m_browser2 = nullptr;
-            spdlog::info("{}: retained second offline browser for platform shutdown drain", NameOf(LocalTestPage));
+            LOG_INFO("{}: retained second offline browser for platform shutdown drain", NameOf(LocalTestPage));
         }
     }
 }

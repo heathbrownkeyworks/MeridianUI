@@ -226,6 +226,7 @@ Optional build flags:
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `MERIDIAN_ENABLE_SIGNING` | `OFF` | Sign and verify Release binaries with Azure Artifact Signing |
+| `LOCAL_SIGNING` | `OFF` | Sign Release binaries with a local self-signed certificate (developer testing only) |
 | `MERIDIAN_BUILD_FIXTURE` | `OFF` | Build the in-game Meridian UI lifecycle fixture |
 | `MERIDIAN_BUILD_NIF_TEST` | `OFF` | Build the standalone NIF test consumer |
 | `BUILD_TESTING` | CMake default | Build the native regression suite |
@@ -241,6 +242,30 @@ Signing is optional and disabled by default. Maintainers who use Azure Artifact 
 5. Configure with `-DMERIDIAN_ENABLE_SIGNING=ON`.
 
 The release pipeline preserves valid vendor signatures, appends the maintainer signature, verifies every staged DLL and EXE, and blocks deployment if validation fails.
+
+### Local signing (developer testing)
+
+To test the signing pipeline locally without Azure, sign Release binaries with a
+self-signed code-signing certificate. This is for local development only — the
+resulting binaries are not valid for distribution.
+
+1. Create a self-signed code-signing certificate and export it to a PFX, then
+   add the certificate to **Trusted Root Certification Authorities** so signed
+   binaries verify locally (see `docs/plans/local_signing.txt` for the exact
+   `New-SelfSignedCertificate` / `Export-PfxCertificate` / `certlm.msc` steps).
+2. Copy `MyLocalTestCert.cer` and `MyLocalTestCert.pfx` into `signing/local/`
+   (already gitignored). Set the PFX export password in
+   `MERIDIAN_LOCAL_SIGN_PFX_PASSWORD` (or pass `-Password`).
+3. Put `signtool.exe` on `PATH` or set `MERIDIAN_SIGNTOOL_PATH`.
+4. Build with the flag, or configure with `-DLOCAL_SIGNING=ON`:
+
+   ```powershell
+   .\BuildRelease.ps1 -localSigning
+   ```
+
+Only Release binaries are signed; Debug builds skip signing entirely. The local
+path signs each target's output and does not run the Azure release-verification
+target, which requires a real publisher name.
 
 ## Testing and issue reports
 

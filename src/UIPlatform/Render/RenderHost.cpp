@@ -35,20 +35,13 @@ namespace Meridian::Render
         return singleton;
     }
 
-    bool RenderHost::Init(std::shared_ptr<spdlog::logger> a_logger)
+    bool RenderHost::Init()
     {
-        if (a_logger == nullptr)
-        {
-            spdlog::error("{}: has null {}", NameOf(RenderHost), NameOf(a_logger));
-            return false;
-        }
-        m_logger = a_logger;
-
         // Fill render data
         const auto device = reinterpret_cast<ID3D11Device*>(RE::BSGraphics::Renderer::GetDevice());
         if (device == nullptr)
         {
-            m_logger->error("{}: has null {}", NameOf(RenderHost), NameOf(device));
+            LOG_ERROR("{}: has null {}", NameOf(RenderHost), NameOf(device));
             return false;
         }
 
@@ -56,27 +49,27 @@ namespace Meridian::Render
         hResult = device->QueryInterface<ID3D11Device3>(m_device3.ReleaseAndGetAddressOf());
         if (FAILED(hResult))
         {
-            m_logger->error("{}: failed to query interface {}", NameOf(RenderHost), NameOf(ID3D11Device3));
+            LOG_ERROR("{}: failed to query interface {}", NameOf(RenderHost), NameOf(ID3D11Device3));
             return false;
         }
 
         m_device3->GetImmediateContext3(m_immediateContext.ReleaseAndGetAddressOf());
         if (m_immediateContext == nullptr)
         {
-            m_logger->error("{}: has null ID3D11DeviceContext3", NameOf(RenderHost));
+            LOG_ERROR("{}: has null ID3D11DeviceContext3", NameOf(RenderHost));
             return false;
         }
 
         m_immediateContext->GetDevice(m_gameDevice.ReleaseAndGetAddressOf());
         if (m_gameDevice == nullptr)
         {
-            m_logger->error("{}: immediate context returned no native D3D11 device", NameOf(RenderHost));
+            LOG_ERROR("{}: immediate context returned no native D3D11 device", NameOf(RenderHost));
             return false;
         }
 
         const auto rendererDeviceIdentity = GetComIdentity(device);
         const auto gameDeviceIdentity = GetComIdentity(m_gameDevice.Get());
-        m_logger->info(
+        LOG_INFO(
             "{}: normalized render device rendererInterface={:p} queriedDevice3={:p} contextDevice={:p} rendererIdentity={:p} contextIdentity={:p} sameIdentity={}",
             NameOf(RenderHost),
             static_cast<void*>(device),
@@ -106,14 +99,14 @@ namespace Meridian::Render
         const auto requestedTransport = overrides.browserTransport.value_or(BrowserTransport::Auto);
         m_renderData.browserTransport = ResolveBrowserTransport(requestedTransport, dxvk, wine);
         m_renderData.cpuUploadFrameRate = overrides.cpuUploadFrameRate.value_or(30);
-        m_logger->info("RenderHost: browser transport={} requested={} DXVK={} Wine={} CPU frame cap={}",
+        LOG_INFO("RenderHost: browser transport={} requested={} DXVK={} Wine={} CPU frame cap={}",
             ToString(m_renderData.browserTransport), ToString(requestedTransport), dxvk, wine, m_renderData.cpuUploadFrameRate);
         Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice;
         Microsoft::WRL::ComPtr<IDXGIAdapter> adapter;
         DXGI_ADAPTER_DESC adapterDesc{};
         if (SUCCEEDED(m_gameDevice.As(&dxgiDevice)) && SUCCEEDED(dxgiDevice->GetAdapter(adapter.GetAddressOf())) &&
             SUCCEEDED(adapter->GetDesc(&adapterDesc)))
-            m_logger->info("RenderHost: adapter={} vendor={:#06x} device={:#06x} LUID={:08x}:{:08x}",
+            LOG_INFO("RenderHost: adapter={} vendor={:#06x} device={:#06x} LUID={:08x}:{:08x}",
                 std::filesystem::path(adapterDesc.Description).string(), adapterDesc.VendorId, adapterDesc.DeviceId,
                 std::uint32_t(adapterDesc.AdapterLuid.HighPart), adapterDesc.AdapterLuid.LowPart);
         // The COM vtable belongs to the actual device implementation, even when
@@ -126,7 +119,7 @@ namespace Meridian::Render
             wchar_t modulePath[MAX_PATH]{};
             const auto length = ::GetModuleFileNameW(deviceModule, modulePath, MAX_PATH);
             if (length > 0 && length < MAX_PATH)
-                m_logger->info("RenderHost: device implementation={}", std::filesystem::path(modulePath).string());
+                LOG_INFO("RenderHost: device implementation={}", std::filesystem::path(modulePath).string());
         }
         if (!(dxvk && !wine) || m_renderData.browserTransport == BrowserTransport::SharedTexture)
         {
@@ -136,9 +129,9 @@ namespace Meridian::Render
             if (platformDevice->Create(m_gameDevice.Get()))
                 m_renderData.platformDevice = std::move(platformDevice);
             else
-                m_logger->warn("{}: platform render device unavailable, ring renderer disabled", NameOf(RenderHost));
+                LOG_WARN("{}: platform render device unavailable, ring renderer disabled", NameOf(RenderHost));
         }
-        m_logger->info("RenderHost: NIF rendering={}",
+        LOG_INFO("RenderHost: NIF rendering={}",
             m_renderData.gameDeviceNifRendering ? "DeferredGameDevice" : "SharedTexture");
 
         // CommonLibSSE-NG's RE::BSGraphics::Renderer exposes the swap chain as
@@ -150,7 +143,7 @@ namespace Meridian::Render
         m_swapChain = reinterpret_cast<IDXGISwapChain*>(runtime.renderWindows[0].swapChain);
         if (m_swapChain == nullptr)
         {
-            m_logger->error("{}: no swap chain — cannot render", NameOf(RenderHost));
+            LOG_ERROR("{}: no swap chain — cannot render", NameOf(RenderHost));
             return false;
         }
         m_inited.store(true, std::memory_order_release);
@@ -165,7 +158,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: renderer unavailable while refreshing swap chain ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+                LOG_ERROR("{}: renderer unavailable while refreshing swap chain ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
             }
             return false;
         }
@@ -177,7 +170,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: current runtime swap chain is null ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+                LOG_ERROR("{}: current runtime swap chain is null ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
             }
             return false;
         }
@@ -187,7 +180,7 @@ namespace Meridian::Render
             auto* previousSwapChain = m_swapChain.Get();
             m_swapChain = currentSwapChain;
             m_targetLogPending = true;
-            m_logger->info(
+            LOG_INFO(
                 "{}: runtime swap chain changed {:p} -> {:p}",
                 NameOf(RenderHost),
                 static_cast<void*>(previousSwapChain),
@@ -208,7 +201,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: swap chain GetBuffer failed ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+                LOG_ERROR("{}: swap chain GetBuffer failed ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
             }
             return false;
         }
@@ -227,7 +220,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: no game render target is bound before renderer end ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+                LOG_ERROR("{}: no game render target is bound before renderer end ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
             }
             return false;
         }
@@ -240,7 +233,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: bound game render target is not a D3D11 texture ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
+                LOG_ERROR("{}: bound game render target is not a D3D11 texture ({} more suppressed in the last window)", NameOf(RenderHost), suppressed);
             }
             return false;
         }
@@ -274,7 +267,7 @@ namespace Meridian::Render
 
         if (m_targetLogPending || targetDescriptionChanged || targetSourceChanged)
         {
-            m_logger->info(
+            LOG_INFO(
                 "{}: compositor target source={} owner={:p} texture={:p} dimensions={}x{} format={} targetDevice={:p} renderDevice={:p} targetIdentity={:p} renderIdentity={:p} sameDevice={}",
                 NameOf(RenderHost),
                 ToString(a_target),
@@ -300,7 +293,7 @@ namespace Meridian::Render
             std::uint32_t suppressed = 0;
             if (m_getBufferFailThrottle.ShouldLog(suppressed))
             {
-                m_logger->error("{}: refusing {} from a different D3D11 device ({} more suppressed in the last window)", NameOf(RenderHost), ToString(a_target), suppressed);
+                LOG_ERROR("{}: refusing {} from a different D3D11 device ({} more suppressed in the last window)", NameOf(RenderHost), ToString(a_target), suppressed);
             }
             return false;
         }
@@ -311,7 +304,7 @@ namespace Meridian::Render
             const int oldH = static_cast<int>(m_renderData.height);
             m_renderData.width = desc.Width;
             m_renderData.height = desc.Height;
-            m_logger->info("{}: resolution changed {}x{} -> {}x{}", NameOf(RenderHost), oldW, oldH, desc.Width, desc.Height);
+            LOG_INFO("{}: resolution changed {}x{} -> {}x{}", NameOf(RenderHost), oldW, oldH, desc.Width, desc.Height);
             if (oldW > 0 && oldH > 0)
             {
                 m_compositor.ForEach([&](Meridian::Menus::ISubMenu& a_menu) {
@@ -358,7 +351,7 @@ namespace Meridian::Render
             // IDXGISwapChain::ResizeBuffers will succeed.
             if (FAILED(m_renderData.device->CreateRenderTargetView(backbuffer.Get(), nullptr, compositorRTV.GetAddressOf())))
             {
-                m_logger->error("{}: CreateRenderTargetView failed", NameOf(RenderHost));
+                LOG_ERROR("{}: CreateRenderTargetView failed", NameOf(RenderHost));
                 return;
             }
         }
@@ -374,11 +367,11 @@ namespace Meridian::Render
             }
             catch (const std::exception& error)
             {
-                m_logger->error("{}: native layer Prepare failed: {}", NameOf(RenderHost), error.what());
+                LOG_ERROR("{}: native layer Prepare failed: {}", NameOf(RenderHost), error.what());
             }
             catch (...)
             {
-                m_logger->error("{}: unknown exception in native layer Prepare", NameOf(RenderHost));
+                LOG_ERROR("{}: unknown exception in native layer Prepare", NameOf(RenderHost));
             }
         }
 
@@ -405,7 +398,6 @@ namespace Meridian::Render
             UINT savedViewportCount;
             D3D11_VIEWPORT* savedViewports;
             const std::vector<std::shared_ptr<Meridian::Menus::ISubMenu>>& menus;
-            std::shared_ptr<spdlog::logger> logger;
             bool spriteBatchBegun = false;
             bool drawLockHeld = false;
 
@@ -421,10 +413,7 @@ namespace Meridian::Render
                     }
                     catch (...)
                     {
-                        if (logger != nullptr)
-                        {
-                            logger->error("RenderHost: SpriteBatch::End failed during present cleanup");
-                        }
+                        LOG_ERROR("RenderHost: SpriteBatch::End failed during present cleanup");
                     }
                 }
                 if (drawLockHeld)
@@ -442,10 +431,7 @@ namespace Meridian::Render
                         }
                         catch (...)
                         {
-                            if (logger != nullptr)
-                            {
-                                logger->error("RenderHost: layer AfterDraw failed during present cleanup");
-                            }
+                            LOG_ERROR("RenderHost: layer AfterDraw failed during present cleanup");
                         }
                     }
                 }
@@ -461,7 +447,7 @@ namespace Meridian::Render
         };
 
         PresentStateGuard stateGuard{
-            m_renderData, ctx, savedRTVs, savedDSV, savedViewportCount, savedViewports, menus, m_logger};
+            m_renderData, ctx, savedRTVs, savedDSV, savedViewportCount, savedViewports, menus};
 
         ID3D11RenderTargetView* rtv = compositorRTV.Get();
         ctx->OMSetRenderTargets(1, &rtv, nullptr);
@@ -494,11 +480,11 @@ namespace Meridian::Render
         }
         catch (const std::exception& err)
         {
-            m_logger->error("{}: {}", NameOf(RenderHost), err.what());
+            LOG_ERROR("{}: {}", NameOf(RenderHost), err.what());
         }
         catch (...)
         {
-            m_logger->error("{}: unknown exception in sub-menu Draw()", NameOf(RenderHost));
+            LOG_ERROR("{}: unknown exception in sub-menu Draw()", NameOf(RenderHost));
         }
 
         MERIDIAN_PROBE_SCOPE_END(m_perfProbe, menus.size());

@@ -22,11 +22,10 @@ namespace Meridian::Services
         static inline std::mutex s_uipInitMutex;
         static inline std::atomic_bool s_isUIPInited{false};
 
-        std::shared_ptr<spdlog::logger> m_logger = nullptr;
         std::atomic_bool m_isShuttingDown{false};
 
     public:
-        UIPlatformService();
+        UIPlatformService() = default;
         ~UIPlatformService() override = default;
 
         bool IsInited();
@@ -35,8 +34,7 @@ namespace Meridian::Services
         /// Init ui service and it's dependencies
         /// </summary>
         /// <returns></returns>
-        bool Init(std::shared_ptr<spdlog::logger> a_logger,
-                  std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider);
+        bool Init(std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider);
 
         /// <summary>
         /// Init ui service with custom settings

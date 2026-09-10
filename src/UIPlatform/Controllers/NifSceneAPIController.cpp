@@ -130,7 +130,7 @@ namespace Meridian::Controllers
                             a_path.c_str(), a_scene, arguments);
                         if (error != RE::BSResource::ErrorCode::kNone || a_scene == nullptr)
                         {
-                            spdlog::warn(
+                            LOG_WARN(
                                 "{}: BSModelDB could not load scene object {} '{}' (error {})",
                                 NameOf(NifSceneAPIController),
                                 request.object,
@@ -178,14 +178,14 @@ namespace Meridian::Controllers
             }
             catch (const std::exception& error)
             {
-                spdlog::error("{}: exception loading scene: {}",
+                LOG_ERROR("{}: exception loading scene: {}",
                               NameOf(NifSceneAPIController), error.what());
                 target->FailNifLoad(
                     a_generation, Meridian::UI::NifView::Status::Failed);
             }
             catch (...)
             {
-                spdlog::error("{}: unknown exception loading scene",
+                LOG_ERROR("{}: unknown exception loading scene",
                               NameOf(NifSceneAPIController));
                 target->FailNifLoad(
                     a_generation, Meridian::UI::NifView::Status::Failed);
@@ -213,7 +213,7 @@ namespace Meridian::Controllers
             const auto generation = NextNifLoadGeneration();
             surface->BeginNifLoad(generation);
             const std::weak_ptr<Meridian::Menus::NativeSurfaceMenu> weakSurface = surface;
-            spdlog::info("{}: queued {} scene objects at weight {:.1f} for surface {}",
+            LOG_INFO("{}: queued {} scene objects at weight {:.1f} for surface {}",
                          NameOf(NifSceneAPIController),
                          a_requested.size(),
                          a_weight * 100.0f,
@@ -248,7 +248,7 @@ namespace Meridian::Controllers
                     item.armorFormID);
                 if (armor == nullptr)
                 {
-                    spdlog::warn("{}: armor {:08X} was not found",
+                    LOG_WARN("{}: armor {:08X} was not found",
                                  NameOf(NifSceneAPIController), item.armorFormID);
                     return false;
                 }
@@ -270,7 +270,7 @@ namespace Meridian::Controllers
                         !ShouldIncludeSkinAddon(addonSlots, item.blockedBipedSlots))
                     {
                         hadCoveredAddon = true;
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: skin armor {:08X} ARMA {:08X} slots {:08X} intersect occupied slots {:08X}; skipped",
                             NameOf(NifSceneAPIController),
                             item.armorFormID,
@@ -284,7 +284,7 @@ namespace Meridian::Controllers
                     const char* model = modelSwap.GetModel();
                     if (model == nullptr || std::string_view(model).empty())
                     {
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: armor {:08X} ARMA {:08X} has no sex {} third-person model; skipped",
                             NameOf(NifSceneAPIController),
                             item.armorFormID,
@@ -295,7 +295,7 @@ namespace Meridian::Controllers
                     if (IsIntentionalBlankArmorModelPath(model))
                     {
                         hadIntentionalBlankProxy = true;
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: armor {:08X} ARMA {:08X} uses intentional blank proxy '{}'; skipped",
                             NameOf(NifSceneAPIController),
                             item.armorFormID,
@@ -308,7 +308,7 @@ namespace Meridian::Controllers
                         model, addon->data.modelRange[sexIndex]);
                     if (!paths)
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: armor {:08X} ARMA {:08X} could not resolve a safe sex model (path status {})",
                             NameOf(NifSceneAPIController),
                             item.armorFormID,
@@ -319,7 +319,7 @@ namespace Meridian::Controllers
                     if (a_requested.size() >=
                         Meridian::Render::NifPreview::MAX_RESOLVED_SCENE_PARTS)
                     {
-                        spdlog::warn("{}: armor scene exceeded the {} resolved-part cap",
+                        LOG_WARN("{}: armor scene exceeded the {} resolved-part cap",
                                      NameOf(NifSceneAPIController),
                                      Meridian::Render::NifPreview::MAX_RESOLVED_SCENE_PARTS);
                         return false;
@@ -329,7 +329,7 @@ namespace Meridian::Controllers
                         textureOverrides;
                     if (!CopyTextureOverrides(modelSwap, textureOverrides))
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: armor {:08X} ARMA {:08X} has malformed or excessive alternate textures",
                             NameOf(NifSceneAPIController),
                             item.armorFormID,
@@ -337,7 +337,7 @@ namespace Meridian::Controllers
                         return false;
                     }
 
-                    spdlog::info(
+                    LOG_INFO(
                         "{}: armor {:08X} resolved through ARMA {:08X} to '{}'{} with {} alternate textures",
                         NameOf(NifSceneAPIController),
                         item.armorFormID,
@@ -358,7 +358,7 @@ namespace Meridian::Controllers
                 {
                     if (hadIntentionalBlankProxy)
                     {
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: armor {:08X} contains only intentional blank proxy models; omitted from scene",
                             NameOf(NifSceneAPIController),
                             item.armorFormID);
@@ -366,7 +366,7 @@ namespace Meridian::Controllers
                     }
                     if (item.allowEmptyAfterFiltering && hadCoveredAddon)
                     {
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: armor {:08X} contains no visible foundation geometry after filtering; omitted from scene",
                             NameOf(NifSceneAPIController),
                             item.armorFormID);
@@ -374,13 +374,13 @@ namespace Meridian::Controllers
                     }
                     if (item.allowEmptyAfterFiltering)
                     {
-                        spdlog::info(
+                        LOG_INFO(
                             "{}: optional skin armor {:08X} has no renderable race-valid model; omitted from scene",
                             NameOf(NifSceneAPIController),
                             item.armorFormID);
                         continue;
                     }
-                    spdlog::warn("{}: armor {:08X} has no race-valid ARMA model for sex {}",
+                    LOG_WARN("{}: armor {:08X} has no race-valid ARMA model for sex {}",
                                  NameOf(NifSceneAPIController),
                                  item.armorFormID,
                                  static_cast<std::uint32_t>(a_sex));
@@ -413,7 +413,7 @@ namespace Meridian::Controllers
             const auto generation = NextNifLoadGeneration();
             surface->BeginNifLoad(generation);
             const std::weak_ptr<Meridian::Menus::NativeSurfaceMenu> weakSurface = surface;
-            spdlog::info("{}: queued {} armor records for race {:08X}, sex {}, weight {:.1f} on surface {}",
+            LOG_INFO("{}: queued {} armor records for race {:08X}, sex {}, weight {:.1f} on surface {}",
                          NameOf(NifSceneAPIController),
                          a_requested.size(),
                          a_raceFormID,
@@ -440,7 +440,7 @@ namespace Meridian::Controllers
                     auto* race = RE::TESForm::LookupByID<RE::TESRace>(raceFormID);
                     if (race == nullptr)
                     {
-                        spdlog::warn("{}: armor scene race {:08X} was not found",
+                        LOG_WARN("{}: armor scene race {:08X} was not found",
                                      NameOf(NifSceneAPIController), raceFormID);
                         target->FailNifLoad(
                             generation, Meridian::UI::NifView::Status::Unsupported);
@@ -459,7 +459,7 @@ namespace Meridian::Controllers
 
                     if (requested.empty())
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: armor scene contains no renderable geometry after blank-proxy filtering",
                             NameOf(NifSceneAPIController));
                         target->FailNifLoad(
@@ -476,14 +476,14 @@ namespace Meridian::Controllers
                 }
                 catch (const std::exception& error)
                 {
-                    spdlog::error("{}: exception resolving armor scene: {}",
+                    LOG_ERROR("{}: exception resolving armor scene: {}",
                                   NameOf(NifSceneAPIController), error.what());
                     target->FailNifLoad(
                         generation, Meridian::UI::NifView::Status::Failed);
                 }
                 catch (...)
                 {
-                    spdlog::error("{}: unknown exception resolving armor scene",
+                    LOG_ERROR("{}: unknown exception resolving armor scene",
                                   NameOf(NifSceneAPIController));
                     target->FailNifLoad(
                         generation, Meridian::UI::NifView::Status::Failed);
@@ -514,7 +514,7 @@ namespace Meridian::Controllers
             const auto generation = NextNifLoadGeneration();
             surface->BeginNifLoad(generation);
             const std::weak_ptr<Meridian::Menus::NativeSurfaceMenu> weakSurface = surface;
-            spdlog::info("{}: queued actor appearance {:08X}, parts {:02X}, on surface {}",
+            LOG_INFO("{}: queued actor appearance {:08X}, parts {:02X}, on surface {}",
                          NameOf(NifSceneAPIController),
                          a_actorFormID,
                          a_parts,
@@ -542,7 +542,7 @@ namespace Meridian::Controllers
                     auto* actorRoot = actor3D != nullptr ? actor3D->AsNode() : nullptr;
                     if (actor == nullptr || actorRoot == nullptr)
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: loaded actor {:08X} has no third-person 3D root",
                             NameOf(NifSceneAPIController),
                             actorFormID);
@@ -569,7 +569,7 @@ namespace Meridian::Controllers
                         const auto& biped = actor->GetBiped(false);
                         if (biped == nullptr)
                         {
-                            spdlog::warn(
+                            LOG_WARN(
                                 "{}: loaded actor {:08X} has no third-person biped",
                                 NameOf(NifSceneAPIController),
                                 actorFormID);
@@ -617,7 +617,7 @@ namespace Meridian::Controllers
                         auto* faceNode = actor->GetFaceNodeSkinned();
                         if (faceNode == nullptr)
                         {
-                            spdlog::warn(
+                            LOG_WARN(
                                 "{}: loaded actor {:08X} has no skinned face node",
                                 NameOf(NifSceneAPIController),
                                 actorFormID);
@@ -632,7 +632,7 @@ namespace Meridian::Controllers
 
                     if (liveActorRoots.empty())
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: loaded actor {:08X} has no selected live appearance roots",
                             NameOf(NifSceneAPIController),
                             actorFormID);
@@ -650,7 +650,7 @@ namespace Meridian::Controllers
                         .lowModelPath = fmt::format("<loaded actor {:08X}>", actorFormID),
                         .visible = true,
                     });
-                    spdlog::info(
+                    LOG_INFO(
                         "{}: loaded actor {:08X} snapshot selected {} equipment, {} skin, and {} face roots",
                         NameOf(NifSceneAPIController),
                         actorFormID,
@@ -662,14 +662,14 @@ namespace Meridian::Controllers
                 }
                 catch (const std::exception& error)
                 {
-                    spdlog::error("{}: exception resolving actor appearance: {}",
+                    LOG_ERROR("{}: exception resolving actor appearance: {}",
                                   NameOf(NifSceneAPIController), error.what());
                     target->FailNifLoad(
                         generation, Meridian::UI::NifView::Status::Failed);
                 }
                 catch (...)
                 {
-                    spdlog::error("{}: unknown exception resolving actor appearance",
+                    LOG_ERROR("{}: unknown exception resolving actor appearance",
                                   NameOf(NifSceneAPIController));
                     target->FailNifLoad(
                         generation, Meridian::UI::NifView::Status::Failed);
@@ -710,7 +710,7 @@ namespace Meridian::Controllers
             std::string path;
             if (!NormalizeNifModelPath(source.modelPath, path))
             {
-                spdlog::warn("{}: rejected unsafe or invalid scene NIF path",
+                LOG_WARN("{}: rejected unsafe or invalid scene NIF path",
                              NameOf(NifSceneAPIController));
                 return false;
             }
@@ -759,7 +759,7 @@ namespace Meridian::Controllers
                 (source.highModelPath != nullptr &&
                  !NormalizeNifModelPath(source.highModelPath, object.highModelPath)))
             {
-                spdlog::warn("{}: Meridian.NifScene/{} rejected an unsafe weighted NIF path",
+                LOG_WARN("{}: Meridian.NifScene/{} rejected an unsafe weighted NIF path",
                              NameOf(NifSceneAPIController),
                              WEIGHTED_INTERFACE_VERSION);
                 return false;

@@ -8,14 +8,10 @@
 
 namespace Meridian::CEF
 {
-    DefaultBrowser::DefaultBrowser(std::shared_ptr<spdlog::logger> a_logger,
-                                   CefRefPtr<MeridianCefClient> a_cefClient,
+    DefaultBrowser::DefaultBrowser(CefRefPtr<MeridianCefClient> a_cefClient,
                                    std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
                                    std::shared_ptr<Meridian::Menus::LayerGeometryHolder> a_geometryHolder)
     {
-        ThrowIfNullptr(DefaultBrowser, a_logger);
-        m_logger = a_logger;
-
         ThrowIfNullptr(DefaultBrowser, a_cefClient);
         m_cefClient = a_cefClient;
 
@@ -53,7 +49,7 @@ namespace Meridian::CEF
             {
                 if (!m_cefClient->CanExposeNativeBindings())
                 {
-                    m_logger->warn("{}: ignored native function call from an untrusted document", NameOf(DefaultBrowser));
+                    LOG_WARN("{}: ignored native function call from an untrusted document", NameOf(DefaultBrowser));
                     return;
                 }
                 const auto ipcArgs = a_message->GetArgumentList();
@@ -68,7 +64,7 @@ namespace Meridian::CEF
             {
                 if (!m_cefClient->CanExposeNativeBindings())
                 {
-                    m_logger->warn("{}: ignored native promise call from an untrusted document", NameOf(DefaultBrowser));
+                    LOG_WARN("{}: ignored native promise call from an untrusted document", NameOf(DefaultBrowser));
                     return;
                 }
                 const auto ipcArgs = a_message->GetArgumentList();
@@ -95,7 +91,7 @@ namespace Meridian::CEF
 
                 if (!found || callbackData.callback == nullptr)
                 {
-                    spdlog::debug("{}: no promise binding for {}.{}", NameOf(DefaultBrowser), objName.c_str(), funcName.c_str());
+                    LOG_DEBUG("{}: no promise binding for {}.{}", NameOf(DefaultBrowser), objName.c_str(), funcName.c_str());
                     if (browser != nullptr)
                     {
                         const auto frame = browser->GetMainFrame();
@@ -392,7 +388,7 @@ namespace Meridian::CEF
         const auto result = IsBrowserReady();
         if (!result)
         {
-            m_logger->info("{}: browser is still loading, try later", NameOf(DefaultBrowser));
+            LOG_INFO("{}: browser is still loading, try later", NameOf(DefaultBrowser));
         }
         return result;
     }
@@ -684,7 +680,7 @@ namespace Meridian::CEF
         std::lock_guard locker(m_urlMutex);
         if (a_url == nullptr || *a_url == '\0' || !m_cefClient->AllowInitialNavigation(a_url))
         {
-            m_logger->error("{}: blocked untrusted navigation request", NameOf(DefaultBrowser));
+            LOG_ERROR("{}: blocked untrusted navigation request", NameOf(DefaultBrowser));
             return;
         }
         m_clearJSFunctions = a_clearJSFunctions;
@@ -704,7 +700,7 @@ namespace Meridian::CEF
         }
         else
         {
-            m_logger->error("{}: can't get main frame to load url \"{}\"", NameOf(DefaultBrowser), a_url);
+            LOG_ERROR("{}: can't get main frame to load url \"{}\"", NameOf(DefaultBrowser), a_url);
         }
         m_isUrlCached = false;
     }
@@ -749,7 +745,7 @@ namespace Meridian::CEF
         if (a_callbackInfo.objectName == nullptr || *a_callbackInfo.objectName == '\0' ||
             a_callbackInfo.funcName == nullptr || *a_callbackInfo.funcName == '\0')
         {
-            m_logger->error("{}: rejected function binding with a null or empty name", NameOf(DefaultBrowser));
+            LOG_ERROR("{}: rejected function binding with a null or empty name", NameOf(DefaultBrowser));
             return;
         }
         m_cefClient->EnableNativeBindings();
@@ -1028,7 +1024,7 @@ namespace Meridian::CEF
             a_info.funcName == nullptr || *a_info.funcName == '\0' ||
             a_info.callback == nullptr)
         {
-            m_logger->error("{}: rejected promise binding with invalid name or null callback", NameOf(DefaultBrowser));
+            LOG_ERROR("{}: rejected promise binding with invalid name or null callback", NameOf(DefaultBrowser));
             return;
         }
         m_cefClient->EnableNativeBindings();

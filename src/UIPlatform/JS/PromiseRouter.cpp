@@ -14,7 +14,7 @@ namespace Meridian::JS
     {
         if (a_browser == nullptr)
         {
-            spdlog::warn("PromiseRouter::AddRoute: dropping route for call {} (browser {}) — browser is null", a_callId, a_browserId);
+            LOG_WARN("PromiseRouter::AddRoute: dropping route for call {} (browser {}) — browser is null", a_callId, a_browserId);
             return;
         }
 
@@ -97,13 +97,13 @@ namespace Meridian::JS
 
             if (m_settled.exchange(true, std::memory_order_acq_rel))
             {
-                spdlog::debug("PromiseResolver: duplicate settle for call {} (browser {}) ignored", callId, browserId);
+                LOG_DEBUG("PromiseResolver: duplicate settle for call {} (browser {}) ignored", callId, browserId);
                 return;
             }
             const auto browser = PromiseRouter::GetSingleton().TakeRoute(browserId, callId);
             if (browser == nullptr)
             {
-                spdlog::debug("PromiseResolver: route for call {} (browser {}) already gone (browser closed)", callId, browserId);
+                LOG_DEBUG("PromiseResolver: route for call {} (browser {}) already gone (browser closed)", callId, browserId);
                 return;
             }
             const auto frame = browser->GetMainFrame();

@@ -44,7 +44,7 @@ namespace Meridian::Render
 
             const auto p50 = sorted[m_count / 2];
             const auto p99 = sorted[std::min(m_count - 1, (m_count * 99) / 100)];
-            spdlog::info("PerfProbe: layers={} p50={}us p99={}us over {} frames", a_layerCount, p50, p99, m_count);
+            LOG_INFO("PerfProbe: layers={} p50={}us p99={}us over {} frames", a_layerCount, p50, p99, m_count);
         }
     };
 }

@@ -30,7 +30,7 @@ namespace Meridian::Render
     public:
         static RenderHost& GetSingleton();
 
-        bool Init(std::shared_ptr<spdlog::logger> a_logger);
+        bool Init();
         void OnPresent(CompositorTarget a_target);
 
         RenderData* GetRenderData();
@@ -52,7 +52,6 @@ namespace Meridian::Render
             CompositorTarget a_target,
             void* a_ownerIdentity);
 
-        std::shared_ptr<spdlog::logger> m_logger;
         RenderData m_renderData;
         Meridian::Menus::Compositor m_compositor;
         PerfProbe m_perfProbe;

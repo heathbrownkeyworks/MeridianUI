@@ -59,7 +59,7 @@ namespace Meridian::JS
             const auto callbackData = GetFunctionCallbackData(a_objectName, a_funcName);
             if (callbackData.callback == nullptr)
             {
-                spdlog::debug("{}: function callback is nullptr for {}.{}", NameOf(JSFunctionStorage), a_objectName.c_str(), a_funcName.c_str());
+                LOG_DEBUG("{}: function callback is nullptr for {}.{}", NameOf(JSFunctionStorage), a_objectName.c_str(), a_funcName.c_str());
                 EndFunctionCallback();
                 return;
             }
@@ -210,7 +210,7 @@ namespace Meridian::JS
         const auto callbackData = GetFunctionCallbackData(a_objectName, a_funcName);
         if (callbackData.callback == nullptr)
         {
-            spdlog::debug("{}: function callback is nullptr for {}.{}", NameOf(JSFunctionStorage), a_objectName.c_str(), a_funcName.c_str());
+            LOG_DEBUG("{}: function callback is nullptr for {}.{}", NameOf(JSFunctionStorage), a_objectName.c_str(), a_funcName.c_str());
             return;
         }
 

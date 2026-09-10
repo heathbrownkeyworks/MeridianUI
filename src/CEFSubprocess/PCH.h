@@ -39,3 +39,7 @@ using namespace std::string_literals;
 #include <include/wrapper/cef_helpers.h>
 
 #include "IPC.h"
+
+// MeridianCEFSubprocess is a standalone executable so don't use Logger.h's SKSE-based log directory resolution.
+#define MERIDIAN_LOG_NO_SKSE
+#include "Common/Logger.h"

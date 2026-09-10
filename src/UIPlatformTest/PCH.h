@@ -19,7 +19,6 @@ using namespace std::string_literals;
 #include <SKSE/Impl/Stubs.h>
 #include <SKSE/SKSE.h>
 
-namespace logger = SKSE::log;
 using SKSE::stl::adjust_pointer;
 using SKSE::stl::not_null;
 using SKSE::stl::unrestricted_cast;
@@ -38,3 +37,4 @@ namespace stl
 // API
 #include "MeridianUIAPI/API.h"
 #include "Common/RuntimePaths.h"
+#include "Common/Logger.h"

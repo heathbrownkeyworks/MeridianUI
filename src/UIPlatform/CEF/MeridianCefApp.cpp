@@ -35,7 +35,7 @@ namespace Meridian::CEF
             // to drop elevation inherited from MO2. This does not elevate a
             // normal launch. See https://github.com/chromiumembedded/cef/issues/3960.
             command_line->AppendSwitch("do-not-de-elevate");
-            spdlog::info(NameOf(MeridianCefApp) ": preserving host launch privileges (do-not-de-elevate)");
+            LOG_INFO(NameOf(MeridianCefApp) ": preserving host launch privileges (do-not-de-elevate)");
         }
 
         // disable creation of a GPUCache/ folder on disk
@@ -60,7 +60,7 @@ namespace Meridian::CEF
         // Also requires D3D11
         auto luid = GetAdapterLuid();
         command_line->AppendSwitchWithValue("use-adapter-luid", luid);
-        spdlog::info(NameOf(MeridianCefApp) ": using adapter luid={}", luid);
+        LOG_INFO(NameOf(MeridianCefApp) ": using adapter luid={}", luid);
 
         // tell Chromium to autoplay <video> elements without
         // requiring the muted attribute or user interaction

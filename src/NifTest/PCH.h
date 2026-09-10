@@ -15,5 +15,5 @@
 #include <spdlog/spdlog.h>
 
 using namespace std::literals;
-namespace logger = SKSE::log;
 
+#include "Common/Logger.h"

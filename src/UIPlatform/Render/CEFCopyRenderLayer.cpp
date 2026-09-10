@@ -9,7 +9,7 @@ namespace Meridian::Render
         const auto hr = m_renderData->device->QueryInterface(IID_PPV_ARGS(&m_device1));
         if (FAILED(hr))
         {
-            spdlog::error("{}: failed QueryInterface(), code {:X}", NameOf(CEFCopyRenderLayer), hr);
+            LOG_ERROR("{}: failed QueryInterface(), code {:X}", NameOf(CEFCopyRenderLayer), hr);
         }
 
         D3D11_TEXTURE2D_DESC textDesc;
@@ -29,7 +29,7 @@ namespace Meridian::Render
         auto hResult = m_renderData->device->CreateTexture2D(&textDesc, nullptr, m_cefTexture.ReleaseAndGetAddressOf());
         if (FAILED(hResult))
         {
-            spdlog::error("{}: failed CreateTexture2D(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
+            LOG_ERROR("{}: failed CreateTexture2D(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
         }
 
         D3D11_SHADER_RESOURCE_VIEW_DESC sharedResourceViewDesc = {};
@@ -41,13 +41,13 @@ namespace Meridian::Render
         hResult = m_renderData->device->CreateShaderResourceView(m_cefTexture.Get(), &sharedResourceViewDesc, m_cefSRV.ReleaseAndGetAddressOf());
         if (FAILED(hResult))
         {
-            spdlog::error("{}: failed CreateShaderResourceView(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
+            LOG_ERROR("{}: failed CreateShaderResourceView(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
         }
 
         hResult = m_renderData->device->CreateDeferredContext(0, m_deferredContext.ReleaseAndGetAddressOf());
         if (FAILED(hResult))
         {
-            spdlog::error("{}: failed CreateDeferredContext(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
+            LOG_ERROR("{}: failed CreateDeferredContext(), code {:X}", NameOf(CEFCopyRenderLayer), hResult);
         }
     }
 
@@ -67,7 +67,7 @@ namespace Meridian::Render
             }
             else
             {
-                spdlog::error("{}: failed FinishCommandList(), code {:X}", NameOf(CEFCopyRenderLayer), result);
+                LOG_ERROR("{}: failed FinishCommandList(), code {:X}", NameOf(CEFCopyRenderLayer), result);
             }
 
             m_renderData->spriteBatch->Draw(
@@ -109,7 +109,7 @@ namespace Meridian::Render
         int width,
         int height)
     {
-        spdlog::error("CEFCopyRenderLayer::OnPaint called");
+        LOG_ERROR("CEFCopyRenderLayer::OnPaint called");
     }
 
     void CEFCopyRenderLayer::OnAcceleratedPaint(
@@ -134,7 +134,7 @@ namespace Meridian::Render
         {
             _com_error err(hr);
             const std::string errMsg = NarrowErrorMessage(err.ErrorMessage());
-            spdlog::error("OpenSharedResource1: unexpected HRESULT {:#X}: {}", static_cast<unsigned long>(hr), errMsg);
+            LOG_ERROR("OpenSharedResource1: unexpected HRESULT {:#X}: {}", static_cast<unsigned long>(hr), errMsg);
             return;
         }
 

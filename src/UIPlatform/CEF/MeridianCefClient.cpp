@@ -39,7 +39,7 @@ namespace Meridian::CEF
                 sharedKeyedTransportSupported);
             if (rendererType == Meridian::UI::RendererType::SyncCopy)
             {
-                spdlog::warn(
+                LOG_WARN(
                     "{}: {} unavailable on the active game adapter; falling back to SyncCopy",
                     NameOf(MeridianCefClient),
                     platformDeviceAvailable ? "shared keyed-texture transport" : "platform device");
@@ -230,7 +230,7 @@ namespace Meridian::CEF
                                          bool*)
     {
         const auto openerId = browser == nullptr ? -1 : browser->GetIdentifier();
-        spdlog::warn("{}: rejected popup {} from browser {} targeting \"{}\"",
+        LOG_WARN("{}: rejected popup {} from browser {} targeting \"{}\"",
                      NameOf(MeridianCefClient::OnBeforePopup),
                      popup_id,
                      openerId,
@@ -263,7 +263,7 @@ namespace Meridian::CEF
 
             if (dispatchReady)
             {
-                spdlog::info("{}: browser with id {} using \"{}\" render layer",
+                LOG_INFO("{}: browser with id {} using \"{}\" render layer",
                              NameOf(MeridianCefClient::OnAfterCreated),
                              browser->GetIdentifier(),
                              m_cefRenderLayer->GetName());
@@ -274,13 +274,13 @@ namespace Meridian::CEF
 
         if (retainedDuringQuiesce)
         {
-            spdlog::info("{}: browser with id {} created while quiesced; suppressing readiness callbacks",
+            LOG_INFO("{}: browser with id {} created while quiesced; suppressing readiness callbacks",
                          NameOf(MeridianCefClient::OnAfterCreated),
                          browser->GetIdentifier());
         }
         else
         {
-            spdlog::info("{}: browser with id {} created during close; suppressing readiness callbacks",
+            LOG_INFO("{}: browser with id {} created during close; suppressing readiness callbacks",
                          NameOf(MeridianCefClient::OnAfterCreated),
                          browser->GetIdentifier());
         }
@@ -331,7 +331,7 @@ namespace Meridian::CEF
 
         if (!allowed)
         {
-            spdlog::warn("{}: blocked {}navigation of {} frame to untrusted URL \"{}\"",
+            LOG_WARN("{}: blocked {}navigation of {} frame to untrusted URL \"{}\"",
                          NameOf(MeridianCefClient::OnBeforeBrowse),
                          is_redirect ? "redirect " : "",
                          frame != nullptr && frame->IsMain() ? "main" : "sub",
@@ -367,7 +367,7 @@ namespace Meridian::CEF
 
         if (!allowed)
         {
-            spdlog::warn("{}: blocked untrusted resource URL \"{}\"", NameOf(MeridianCefClient::OnBeforeResourceLoad), url);
+            LOG_WARN("{}: blocked untrusted resource URL \"{}\"", NameOf(MeridianCefClient::OnBeforeResourceLoad), url);
             return RV_CANCEL;
         }
         return RV_CONTINUE;
@@ -427,7 +427,7 @@ namespace Meridian::CEF
                                        const CefString& errorText,
                                        const CefString& failedUrl)
     {
-        spdlog::error("MeridianCefClient::OnLoadError, url {}, text {}", failedUrl.ToString().data(), errorText.ToString().data());
+        LOG_ERROR("MeridianCefClient::OnLoadError, url {}, text {}", failedUrl.ToString().data(), errorText.ToString().data());
     }
 
     bool MeridianCefClient::OnJSDialog(CefRefPtr<CefBrowser> browser,
@@ -448,7 +448,7 @@ namespace Meridian::CEF
                                                       const CefString& error_string)
     {
         const auto browserId = browser == nullptr ? -1 : browser->GetIdentifier();
-        spdlog::error("{}: browser {} renderer terminated (status={}, error_code={:#010x}, error=\"{}\")",
+        LOG_ERROR("{}: browser {} renderer terminated (status={}, error_code={:#010x}, error=\"{}\")",
                       NameOf(MeridianCefClient::OnRenderProcessTerminated),
                       browserId,
                       static_cast<int>(status),

@@ -23,7 +23,6 @@ namespace Meridian::CEF
                            public std::enable_shared_from_this<DefaultBrowser>
     {
     protected:
-        std::shared_ptr<spdlog::logger> m_logger = nullptr;
         CefRefPtr<MeridianCefClient> m_cefClient = nullptr;
         std::shared_ptr<Meridian::JS::JSFunctionStorage> m_jsFuncStorage = nullptr;
         std::shared_ptr<Meridian::Menus::LayerGeometryHolder> m_geometryHolder = nullptr;
@@ -125,8 +124,7 @@ namespace Meridian::CEF
         sigslot::scoped_connection m_onRendererTerminated_Connection;
 
     public:
-        DefaultBrowser(std::shared_ptr<spdlog::logger> a_logger,
-                       CefRefPtr<MeridianCefClient> a_cefClient,
+        DefaultBrowser(CefRefPtr<MeridianCefClient> a_cefClient,
                        std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
                        std::shared_ptr<Meridian::Menus::LayerGeometryHolder> a_geometryHolder);
         ~DefaultBrowser() override;

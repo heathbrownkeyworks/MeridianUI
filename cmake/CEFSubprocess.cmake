@@ -30,6 +30,7 @@ target_include_directories(
     ${CEFSubprocessProjectName}
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CEFSubprocess
         # Only for the shared Scheme/ModSchemeHandler.h RegisterModScheme() helper
         # (see the CAUTION comment in that header) -- keeps both processes'
@@ -64,8 +65,6 @@ set_target_properties(
         LIBRARY_OUTPUT_DIRECTORY_RELEASE ${NL_UI_PATH}
         LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${NL_UI_PATH}
         LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${NL_UI_PATH}
-        #ARCHIVE_OUTPUT_DIRECTORY ${NL_UI_PATH}/archive
-        #PDB_OUTPUT_DIRECTORY ${NL_UI_PATH}
 )
 
 target_compile_definitions(

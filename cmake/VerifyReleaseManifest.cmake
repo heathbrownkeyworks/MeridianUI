@@ -7,6 +7,12 @@ if(NOT EXISTS "${ROOT}")
     return()
 endif()
 
+set(allowed_release_pdbs
+    "MeridianUI.pdb"
+    "MeridianUIPlugin.pdb"
+    "MeridianCEFSubprocess.pdb"
+)
+
 file(GLOB_RECURSE staged_entries LIST_DIRECTORIES true "${ROOT}/*")
 foreach(entry IN LISTS staged_entries)
     file(TO_CMAKE_PATH "${entry}" normalized)
@@ -14,7 +20,7 @@ foreach(entry IN LISTS staged_entries)
     if(name MATCHES "^MeridianUITest(\\.dll|\\.pdb)?$" OR
        name MATCHES "^MeridianInputTest(\\.dll|\\.pdb)?$" OR
        normalized MATCHES "/[Mm]eridian[Ii]nput[Tt]est($|/)" OR
-       name MATCHES "\\.pdb$" OR
+       (name MATCHES "\\.pdb$" AND NOT name IN_LIST allowed_release_pdbs) OR
        name MATCHES "\\.lastcodeanalysissucceeded$" OR
        name STREQUAL "enable_fixture.txt" OR
        name STREQUAL "use_synccopy.txt" OR

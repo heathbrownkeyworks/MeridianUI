@@ -74,7 +74,7 @@ namespace
     void WarnBadValue(const char* a_key)
     {
 #ifndef MERIDIAN_INICONFIG_NO_RUNTIME
-        spdlog::warn("MeridianUI.ini: malformed value for \"{}\"; ignoring", a_key);
+        LOG_WARN("MeridianUI.ini: malformed value for \"{}\"; ignoring", a_key);
 #else
         (void)a_key;
 #endif
@@ -273,7 +273,7 @@ namespace Meridian::Config
             std::ostringstream buffer;
             buffer << file.rdbuf();
 
-            spdlog::info("MeridianUI: loaded config overrides from \"{}\"", iniPath.string());
+            LOG_INFO("MeridianUI: loaded config overrides from \"{}\"", iniPath.string());
             return ParseIni(buffer.str().c_str());
         }();
         return overrides;

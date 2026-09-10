@@ -7,12 +7,12 @@ namespace Meridian::JS
     {
         if (a_browser == nullptr)
         {
-            spdlog::error("{}: browser is nullptr", NameOf(CEFPromiseFunctionHandler));
+            LOG_ERROR("{}: browser is nullptr", NameOf(CEFPromiseFunctionHandler));
         }
 
         if (a_app == nullptr)
         {
-            spdlog::error("{}: app is nullptr", NameOf(CEFPromiseFunctionHandler));
+            LOG_ERROR("{}: app is nullptr", NameOf(CEFPromiseFunctionHandler));
         }
 
         m_browser = a_browser;
@@ -44,7 +44,7 @@ namespace Meridian::JS
 
             if (!exception.empty())
             {
-                spdlog::error("{}: {}", NameOf(CEFPromiseFunctionHandler::Execute), exception.ToString());
+                LOG_ERROR("{}: {}", NameOf(CEFPromiseFunctionHandler::Execute), exception.ToString());
                 if (firstException.empty())
                 {
                     firstException = exception;
@@ -56,7 +56,7 @@ namespace Meridian::JS
         exception = firstException;
         for (const auto& it : warnMap)
         {
-            spdlog::warn("{} ({})", it.first.c_str(), it.second);
+            LOG_WARN("{} ({})", it.first.c_str(), it.second);
         }
 
         retval = CefV8Value::CreatePromise();

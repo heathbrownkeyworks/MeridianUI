@@ -24,7 +24,7 @@ namespace Meridian::Hooks
                 REL::Relocation<std::uintptr_t> toUnicodeFunc{RELOCATION_ID(67472, 68782), REL::VariantOffset(0x20D, 0x2CB, 0)};
                 if (!IsExpectedCallSite(toUnicodeFunc.address(), CallEncoding::RipRelativeIndirect6))
                 {
-                    spdlog::error(
+                    LOG_ERROR(
                         "{}: install refused at {:X}: expected FF/15 RIP-relative call for Skyrim {}",
                         NameOf(CharGeneratorHook),
                         toUnicodeFunc.address(),
@@ -36,7 +36,7 @@ namespace Meridian::Hooks
             }
             catch (const std::exception& e)
             {
-                spdlog::error("{}: install FAILED ({})", NameOf(CharGeneratorHook), e.what());
+                LOG_ERROR("{}: install FAILED ({})", NameOf(CharGeneratorHook), e.what());
                 return false;
             }
         }

@@ -21,8 +21,6 @@ using namespace std::string_literals;
 #include <SKSE/Impl/Stubs.h>
 #include <SKSE/SKSE.h>
 
-namespace logger = SKSE::log;
-
 // Win
 #include <Windows.h>
 
@@ -33,7 +31,6 @@ namespace logger = SKSE::log;
 
 // this
 #include "Version.h"
-#include "UIPlatform/RuntimeCompatibility.h"
 #include "Common/RuntimePaths.h"
 
 using EntryFunc = bool (*)(const SKSE::LoadInterface* a_skse);
@@ -53,29 +50,23 @@ void InitDefaultLog()
         return;
     }
 
-    const auto level = spdlog::level::info;
-    auto path = logger::log_directory();
-    if (!path)
+    Meridian::Log::InitOptions options{};
+    options.name = "global log"s;
+    options.logFileStem = "MeridianUIPlugin.log";
+    options.useDebugMsvcSink = false;
+    options.alwaysAddFileSink = true;
+    options.debugLevel = Meridian::Log::LogLevel::Info;
+    if (Meridian::Log::Init(options) == nullptr)
     {
-        SKSE::stl::report_and_fail("Failed to find standard logging directory"sv);
+        ShowMessageBox("Failed to initialize MeridianUIPlugin logger");
     }
-
-    *path /= fmt::format("{}.log"sv, "MeridianUIPlugin");
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-
-    auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-    log->set_level(level);
-    log->flush_on(level);
-
-    spdlog::set_default_logger(std::move(log));
-    spdlog::set_pattern("[%Y-%m-%d %T.%e] [%t] [%l] [%s:%#] %v");
     s_loggerInited = true;
 }
 
 void LogError(const char* a_error)
 {
     InitDefaultLog();
-    spdlog::error(a_error);
+    LOG_ERROR("{}", a_error);
 }
 
 void LogError(std::string&& a_error)
@@ -178,36 +169,6 @@ static inline TFunc ExecLibFunc(const char* a_funcName)
     return func;
 }
 
-// AE (1.6+) plugin declaration. Version-independent via Address Library.
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version =
-    Meridian::RuntimeCompatibility::MakePluginVersionData(
-        Meridian::UI::LibVersion::AS_INT,
-        Meridian::UI::LibVersion::PROJECT_NAME);
-
-static_assert(Meridian::RuntimeCompatibility::HasAddressLibraryV5(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(
-        Meridian::UI::LibVersion::AS_INT,
-        Meridian::UI::LibVersion::PROJECT_NAME)));
-static_assert(Meridian::RuntimeCompatibility::HasUpdatedStructs(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(
-        Meridian::UI::LibVersion::AS_INT,
-        Meridian::UI::LibVersion::PROJECT_NAME)));
-
-// SE (1.5.x) plugin declaration
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
-{
-    a_info->infoVersion = SKSE::PluginInfo::kVersion;
-    a_info->name = Meridian::UI::LibVersion::PROJECT_NAME;
-    a_info->version = Meridian::UI::LibVersion::AS_INT;
-
-    if (a_skse->IsEditor() || a_skse->RuntimeVersion() < SKSE::RUNTIME_SSE_1_5_39)
-    {
-        return false;
-    }
-
-    return true;
-}
-
 extern "C" void DLLEXPORT APIENTRY Initialize()
 {
     try
@@ -230,6 +191,11 @@ extern "C" void DLLEXPORT APIENTRY Initialize()
 
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
+    if (a_skse->IsEditor())
+    {
+        return false;
+    }
+
     try
     {
         auto entry = ExecLibFunc<EntryFunc>("Entry");

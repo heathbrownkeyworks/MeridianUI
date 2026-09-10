@@ -28,7 +28,22 @@ if(BUILD_AS_SHARED)
             ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
     )
 
-    add_library(${UIPluginProjectName} SHARED ${UIPluginProjectName_src})
+    add_commonlibsse_plugin(
+        ${UIPluginProjectName}
+        SOURCES ${UIPluginProjectName_src}
+        VERSION ${VERSION}
+        AUTHOR "ColdSun"
+        EMAIL ""
+        USE_ADDRESS_LIBRARY
+        MINIMUM_SKSE_VERSION "2.0.1.04"
+    )
+
+    target_precompile_headers(
+        ${UIPluginProjectName}
+        PRIVATE
+            "src/UIPlugin/PCH.h"
+    )
+
     set_target_properties(
         ${UIPluginProjectName}
         PROPERTIES
@@ -40,8 +55,6 @@ if(BUILD_AS_SHARED)
             LIBRARY_OUTPUT_DIRECTORY_RELEASE ${SKSE_PLUGIN_PATH}
             LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${SKSE_PLUGIN_PATH}
             LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${SKSE_PLUGIN_PATH}
-            #ARCHIVE_OUTPUT_DIRECTORY ${SKSE_PLUGIN_PATH}/archive
-            #PDB_OUTPUT_DIRECTORY ${SKSE_PLUGIN_PATH}
     )
 
     target_include_directories(
@@ -52,13 +65,8 @@ if(BUILD_AS_SHARED)
     )
 
     set_compile_options(${UIPluginProjectName})
+    set_target_properties(${UIPluginProjectName} PROPERTIES PDB_OUTPUT_DIRECTORY ${SKSE_PLUGIN_PATH})
     enable_lto_for_target(${UIPluginProjectName})
-
-    target_link_libraries(
-        ${UIPluginProjectName}
-        PUBLIC
-            CommonLibSSE::CommonLibSSE
-    )
 
     target_compile_definitions(
         ${UIPluginProjectName}

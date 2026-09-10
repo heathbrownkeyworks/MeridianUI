@@ -5,6 +5,7 @@ param(
     [switch]$buildTests = $false,
     [switch]$skipTests = $false,
     [switch]$noLTO = $false,
+    [switch]$localSigning = $false,
     [switch]$fresh
 )
 $ErrorActionPreference = "Stop"
@@ -161,6 +162,11 @@ if ($noLTO) {
     Write-Host "LTO disabled (-noLTO flag) for faster link times"
 } else {
     $cmakeArgs += "-DENABLE_LTO=ON"
+}
+
+if ($localSigning) {
+    $cmakeArgs += "-DLOCAL_SIGNING=ON"
+    Write-Host "Local signing enabled (-localSigning flag) - signing Release binaries with a local self-signed certificate"
 }
 
 if ($fresh) {

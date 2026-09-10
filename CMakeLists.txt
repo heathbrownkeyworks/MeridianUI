@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.26)
-add_definitions(-D_WIN32_WINNT=0x0A00)
 
 option(BUILD_AS_SHARED "Build as dll skse plugin else build as static lib" ON)
 option(MERIDIAN_ENABLE_SIGNING "Code-sign release binaries with Azure Artifact Signing" OFF)
+option(LOCAL_SIGNING "Sign Release binaries with a local self-signed certificate (developer testing only)" OFF)
 option(MERIDIAN_BUILD_FIXTURE "Build and stage the in-game MeridianUITest fixture" OFF)
 option(MERIDIAN_BUILD_NIF_TEST "Build the standalone MeridianNifTest SKSE consumer" OFF)
 option(MERIDIAN_BUILD_INPUT_TEST "Build the standalone MeridianInputTest controller consumer" OFF)
@@ -14,15 +14,12 @@ set(LIB_MINOR_VERSION 5)
 set(LIB_PATCH_VERSION 0)
 set(API_MAJOR_VERSION 1)
 set(API_MINOR_VERSION 0)
+set(LIB_VERSION ${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION})
 
 # VCPKG config
 string(REPLACE "\\" "/" ENV_VCPKG_ROOT "$ENV{VCPKG_ROOT}")
 set(ENV{VCPKG_ROOT} ${ENV_VCPKG_ROOT})
 
-
-# Includes pdb files in release mode
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-#set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
 # Options
 # Limit build parallelism (configurable via -DCMAKE_COMPILE_JOBS and -DCMAKE_LINK_JOBS)
@@ -38,22 +35,20 @@ set_property(GLOBAL PROPERTY JOB_POOLS "compile=${CMAKE_COMPILE_JOBS}" "link=${C
 set(CMAKE_JOB_POOL_COMPILE compile)
 set(CMAKE_JOB_POOL_LINK link)
 set(CMAKE_INSTALL_MESSAGE LAZY)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "/EHsc /MP /W4")
+
 add_compile_definitions(WINDOWS)
 
 project(
     MeridianUI
     LANGUAGES CXX
-    VERSION ${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}
+    VERSION ${LIB_VERSION}
 )
 include(CTest)
 include(${CMAKE_SOURCE_DIR}/cmake/set_compile_options.cmake)
 set(CMAKE_GENERATOR_PLATFORM x64)
 
-string(REPLACE "/Ob2" "/Ob3" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-string(REPLACE "/Ob2" "/Ob3" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+string(REGEX REPLACE "/Ob2" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+string(REGEX REPLACE "/Ob2" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 # Configure files
 configure_file(
@@ -84,18 +79,28 @@ find_package(PalSigslot CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(simpleini CONFIG REQUIRED)
 
-# Code-sign release binaries via Azure Artifact Signing (see signing/sign.ps1).
-# Only runs in Release config; debug builds need no Azure login or network.
+# Code-sign release binaries (see signing/sign.ps1 for Azure Artifact Signing,
+# signing/sign_local.ps1 for local self-signed developer testing).
+# Only runs in Release config; debug builds need no signing setup or network.
+find_program(POWERSHELL_EXE NAMES powershell pwsh)
 function(sign_output TARGET_NAME)
-    if(NOT MERIDIAN_ENABLE_SIGNING)
+    if(NOT MERIDIAN_ENABLE_SIGNING AND NOT LOCAL_SIGNING)
         return()
+    endif()
+
+    if(LOCAL_SIGNING)
+        set(MeridianSigningCommand "-LocalSigning")
+        set(MeridianSigningComment "Signing ${TARGET_NAME} with local self-signed certificate...")
+    else()
+        set(MeridianSigningCommand "")
+        set(MeridianSigningComment "Signing ${TARGET_NAME} (Release only)...")
     endif()
 
     add_custom_command(
         TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
-                -File "${CMAKE_SOURCE_DIR}/signing/cmake_sign.ps1" "$<CONFIG>" "$<TARGET_FILE:${TARGET_NAME}>"
-        COMMENT "Signing ${TARGET_NAME} (Release only)..."
+        COMMAND ${POWERSHELL_EXE} -NoProfile -ExecutionPolicy Bypass
+                -File "${CMAKE_SOURCE_DIR}/signing/cmake_sign.ps1" "$<CONFIG>" "$<TARGET_FILE:${TARGET_NAME}>" ${MeridianSigningCommand}
+        COMMENT "${MeridianSigningComment}"
         VERBATIM
     )
 endfunction()

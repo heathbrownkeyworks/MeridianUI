@@ -6,20 +6,17 @@ namespace Meridian::CEF
 {
     void MeridianSubprocessCefApp::InitLog(CefRefPtr<CefBrowser> a_browser)
     {
-        auto level = spdlog::level::info;
         m_logSink = std::make_shared<Meridian::Log::IPCLogSink_mt>(a_browser);
-        auto logger = std::make_shared<spdlog::logger>("global log"s, m_logSink);
 
-#ifdef _DEBUG
-        level = spdlog::level::trace;
-        logger->sinks().push_back(std::make_shared<spdlog::sinks::msvc_sink_mt>());
-#endif
-
-        logger->set_level(level);
-        logger->flush_on(level);
-        logger->set_pattern("[%T.%e] [%^%l%$] : %v"s);
-
-        spdlog::set_default_logger(logger);
+        Meridian::Log::InitOptions options{};
+        options.name = "global log"s;
+        options.extraSinks = {m_logSink};
+        options.pattern = "[%T.%e] [%^%l%$] : %v"s;
+        if (Meridian::Log::Init(options) == nullptr)
+        {
+            const auto message = "[MeridianCEFSubprocess][" + std::to_string(::GetCurrentProcessId()) + "] failed to initialize logger\n";
+            ::OutputDebugStringA(message.c_str());
+        }
     }
 
     CefRefPtr<CefV8Value> MeridianSubprocessCefApp::GetOrCreateObject(CefRefPtr<CefV8Value> a_parent, const CefString& a_objectName)
@@ -44,21 +41,21 @@ namespace Meridian::CEF
         CEFV8ContextGuard v8ContextGuard(a_frame->GetV8Context());
         if (!v8ContextGuard.IsEntered())
         {
-            spdlog::error("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
         std::vector<Meridian::JS::JsBindingMessage> messages;
         if (!Meridian::JS::FromCefDictionary(a_funcDict, messages))
         {
-            spdlog::error("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
         const auto global = a_frame->GetV8Context()->GetGlobal();
         if (global == nullptr)
         {
-            spdlog::error("{}[{}]: global object is nullptr", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: global object is nullptr", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
@@ -67,14 +64,14 @@ namespace Meridian::CEF
             const auto& objectName = message.DictionaryKey();
             if (objectName.empty())
             {
-                spdlog::error("{}[{}]: object name is empty", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
+                LOG_ERROR("{}[{}]: object name is empty", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
                 continue;
             }
 
             auto currentObjectValue = GetOrCreateObject(global, objectName);
             if (currentObjectValue == nullptr || currentObjectValue->IsNull() || currentObjectValue->IsUndefined() || !currentObjectValue->IsObject())
             {
-                spdlog::error("{}[{}]: can't get or create object \"{}\"",
+                LOG_ERROR("{}[{}]: can't get or create object \"{}\"",
                               NameOf(MeridianSubprocessCefApp::AddFunctionHandlers),
                               ::GetCurrentProcessId(),
                               objectName.c_str());
@@ -85,7 +82,7 @@ namespace Meridian::CEF
             {
                 if (funcName.empty())
                 {
-                    spdlog::warn("{}[{}]: function name is empty, skipping", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
+                    LOG_WARN("{}[{}]: function name is empty, skipping", NameOf(MeridianSubprocessCefApp::AddFunctionHandlers), ::GetCurrentProcessId());
                     continue;
                 }
 
@@ -93,7 +90,7 @@ namespace Meridian::CEF
                 CefRefPtr<CefV8Value> funcValue = CefV8Value::CreateFunction(funcName, funcHandler);
                 if (funcValue == nullptr)
                 {
-                    spdlog::error("{}[{}]: failed to create function \"{}\"",
+                    LOG_ERROR("{}[{}]: failed to create function \"{}\"",
                                   NameOf(MeridianSubprocessCefApp::AddFunctionHandlers),
                                   ::GetCurrentProcessId(),
                                   funcName.c_str());
@@ -101,7 +98,7 @@ namespace Meridian::CEF
                 }
                 if (!currentObjectValue->SetValue(funcName, funcValue, V8_PROPERTY_ATTRIBUTE_NONE))
                 {
-                    spdlog::error("{}[{}]: failed to set function \"{}\" to object \"{}\"",
+                    LOG_ERROR("{}[{}]: failed to set function \"{}\" to object \"{}\"",
                                   NameOf(MeridianSubprocessCefApp::AddFunctionHandlers),
                                   ::GetCurrentProcessId(),
                                   funcName.c_str(),
@@ -125,14 +122,14 @@ namespace Meridian::CEF
         const auto v8Context = a_frame->GetV8Context();
         if (!v8Context->Enter())
         {
-            spdlog::error("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::RemoveFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::RemoveFunctionHandlers), ::GetCurrentProcessId());
             return removedFuncCount;
         }
 
         std::vector<Meridian::JS::JsBindingMessage> messages;
         if (!Meridian::JS::FromCefDictionary(a_funcDict, messages))
         {
-            spdlog::error("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::RemoveFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::RemoveFunctionHandlers), ::GetCurrentProcessId());
             v8Context->Exit();
             return removedFuncCount;
         }
@@ -180,21 +177,21 @@ namespace Meridian::CEF
         CEFV8ContextGuard v8ContextGuard(a_frame->GetV8Context());
         if (!v8ContextGuard.IsEntered())
         {
-            spdlog::error("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
         std::vector<Meridian::JS::JsBindingMessage> messages;
         if (!Meridian::JS::FromCefDictionary(a_funcDict, messages))
         {
-            spdlog::error("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
         const auto global = a_frame->GetV8Context()->GetGlobal();
         if (global == nullptr)
         {
-            spdlog::error("{}[{}]: global object is nullptr", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: global object is nullptr", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
             return addedFuncCount;
         }
 
@@ -203,14 +200,14 @@ namespace Meridian::CEF
             const auto& objectName = message.DictionaryKey();
             if (objectName.empty())
             {
-                spdlog::error("{}[{}]: object name is empty", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
+                LOG_ERROR("{}[{}]: object name is empty", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
                 continue;
             }
 
             auto currentObjectValue = GetOrCreateObject(global, objectName);
             if (currentObjectValue == nullptr || currentObjectValue->IsNull() || currentObjectValue->IsUndefined() || !currentObjectValue->IsObject())
             {
-                spdlog::error("{}[{}]: can't get or create object \"{}\"",
+                LOG_ERROR("{}[{}]: can't get or create object \"{}\"",
                               NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers),
                               ::GetCurrentProcessId(),
                               objectName.c_str());
@@ -221,7 +218,7 @@ namespace Meridian::CEF
             {
                 if (funcName.empty())
                 {
-                    spdlog::warn("{}[{}]: function name is empty, skipping", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
+                    LOG_WARN("{}[{}]: function name is empty, skipping", NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers), ::GetCurrentProcessId());
                     continue;
                 }
 
@@ -229,7 +226,7 @@ namespace Meridian::CEF
                 CefRefPtr<CefV8Value> funcValue = CefV8Value::CreateFunction(funcName, funcHandler);
                 if (funcValue == nullptr)
                 {
-                    spdlog::error("{}[{}]: failed to create function \"{}\"",
+                    LOG_ERROR("{}[{}]: failed to create function \"{}\"",
                                   NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers),
                                   ::GetCurrentProcessId(),
                                   funcName.c_str());
@@ -237,7 +234,7 @@ namespace Meridian::CEF
                 }
                 if (!currentObjectValue->SetValue(funcName, funcValue, V8_PROPERTY_ATTRIBUTE_NONE))
                 {
-                    spdlog::error("{}[{}]: failed to set function \"{}\" to object \"{}\"",
+                    LOG_ERROR("{}[{}]: failed to set function \"{}\" to object \"{}\"",
                                   NameOf(MeridianSubprocessCefApp::AddPromiseFunctionHandlers),
                                   ::GetCurrentProcessId(),
                                   funcName.c_str(),
@@ -261,14 +258,14 @@ namespace Meridian::CEF
         const auto v8Context = a_frame->GetV8Context();
         if (!v8Context->Enter())
         {
-            spdlog::error("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::RemovePromiseFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::RemovePromiseFunctionHandlers), ::GetCurrentProcessId());
             return removedFuncCount;
         }
 
         std::vector<Meridian::JS::JsBindingMessage> messages;
         if (!Meridian::JS::FromCefDictionary(a_funcDict, messages))
         {
-            spdlog::error("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::RemovePromiseFunctionHandlers), ::GetCurrentProcessId());
+            LOG_ERROR("{}[{}]: failed to parse function dictionary", NameOf(MeridianSubprocessCefApp::RemovePromiseFunctionHandlers), ::GetCurrentProcessId());
             v8Context->Exit();
             return removedFuncCount;
         }
@@ -331,7 +328,7 @@ namespace Meridian::CEF
 
         if (!m_browserCreatedMsgSent)
         {
-            spdlog::info("{}[{}]: browser created with id {}, using CEF {}", NameOf(MeridianSubprocessCefApp), ::GetCurrentProcessId(), browser->GetIdentifier(), CEF_VERSION);
+            LOG_INFO("{}[{}]: browser created with id {}, using CEF {}", NameOf(MeridianSubprocessCefApp), ::GetCurrentProcessId(), browser->GetIdentifier(), CEF_VERSION);
             m_browserCreatedMsgSent = true;
         }
     }
@@ -350,7 +347,7 @@ namespace Meridian::CEF
 
         if (frame->IsMain())
         {
-            spdlog::info("{}[{}]: main context with id {} created in browser id {}", NameOf(MeridianSubprocessCefApp), ::GetCurrentProcessId(), frame->GetIdentifier().ToString().data(), browser->GetIdentifier());
+            LOG_INFO("{}[{}]: main context with id {} created in browser id {}", NameOf(MeridianSubprocessCefApp), ::GetCurrentProcessId(), frame->GetIdentifier().ToString().data(), browser->GetIdentifier());
 
             auto message = CefProcessMessage::Create(IPC_JS_CONTEXT_CREATED);
             frame->SendProcessMessage(PID_BROWSER, message);
@@ -366,7 +363,7 @@ namespace Meridian::CEF
                     CEFV8ContextGuard v8ContextGuard(frame->GetV8Context());
                     if (!v8ContextGuard.IsEntered())
                     {
-                        spdlog::error("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::OnContextCreated), ::GetCurrentProcessId());
+                        LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(MeridianSubprocessCefApp::OnContextCreated), ::GetCurrentProcessId());
                         return;
                     }
 
@@ -441,7 +438,7 @@ namespace Meridian::CEF
             }
 
             const auto addedFuncCount = AddFunctionHandlers(browser, frame, source_process, funcDict);
-            spdlog::info("{}[{}]: registered {} functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
+            LOG_INFO("{}[{}]: registered {} functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
             isMessageHandled = true;
         }
         else if (message->GetName() == IPC_JS_FUNCTION_REMOVE_EVENT)
@@ -453,7 +450,7 @@ namespace Meridian::CEF
             }
 
             const auto addedFuncCount = RemoveFunctionHandlers(browser, frame, source_process, funcDict);
-            spdlog::info("{}[{}]: removed {} functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
+            LOG_INFO("{}[{}]: removed {} functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
             isMessageHandled = true;
         }
         else if (message->GetName() == IPC_JS_EVENT_FUNCTION_CALL_EVENT)
@@ -475,7 +472,7 @@ namespace Meridian::CEF
             }
 
             const auto addedFuncCount = AddPromiseFunctionHandlers(browser, frame, source_process, funcDict);
-            spdlog::info("{}[{}]: registered {} promise functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
+            LOG_INFO("{}[{}]: registered {} promise functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), addedFuncCount, browser->GetIdentifier());
             isMessageHandled = true;
         }
         else if (message->GetName() == IPC_JS_PROMISE_FUNCTION_REMOVE_EVENT)
@@ -488,7 +485,7 @@ namespace Meridian::CEF
             }
 
             const auto removedFuncCount = RemovePromiseFunctionHandlers(browser, frame, source_process, funcDict);
-            spdlog::info("{}[{}]: removed {} promise functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), removedFuncCount, browser->GetIdentifier());
+            LOG_INFO("{}[{}]: removed {} promise functions for the browser with id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), removedFuncCount, browser->GetIdentifier());
             isMessageHandled = true;
         }
         else if (message->GetName() == IPC_JS_PROMISE_RESULT)
@@ -506,14 +503,14 @@ namespace Meridian::CEF
             Meridian::JS::PromiseRegistry<Meridian::JS::PendingPromise, std::string>::Entry entry;
             if (!m_promiseRegistry.Take(callId, entry))
             {
-                spdlog::debug("{}[{}]: no pending promise for call id {} (already settled or drained)", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), callId);
+                LOG_DEBUG("{}[{}]: no pending promise for call id {} (already settled or drained)", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), callId);
                 return true;
             }
 
             CEFV8ContextGuard v8ContextGuard(entry.promise.context);
             if (!v8ContextGuard.IsEntered())
             {
-                spdlog::error("{}[{}]: can't enter v8 context to settle promise for call id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), callId);
+                LOG_ERROR("{}[{}]: can't enter v8 context to settle promise for call id {}", NameOf(MeridianSubprocessCefApp::OnProcessMessageReceived), ::GetCurrentProcessId(), callId);
                 return true;
             }
 

@@ -31,7 +31,7 @@ namespace Meridian::Hooks
                 static REL::Relocation<std::uintptr_t> target{RELOCATION_ID(35545, 36544), REL::VariantOffset(0x35, 0x1AE, 0)};
                 if (!IsExpectedCallSite(target.address(), CallEncoding::Relative5))
                 {
-                    spdlog::error(
+                    LOG_ERROR(
                         "{}: install refused at {:X}: expected E8 rel32 call for Skyrim {}",
                         NameOf(ShutdownHook),
                         target.address(),
@@ -41,12 +41,12 @@ namespace Meridian::Hooks
                 auto& trampoline = SKSE::GetTrampoline();
                 _Shutdown = trampoline.write_call<5>(target.address(), &Shutdown); // Main::Shutdown
                 s_installed.store(true, std::memory_order_release);
-                spdlog::info("{}: installed at {:X}", NameOf(ShutdownHook), target.address());
+                LOG_INFO("{}: installed at {:X}", NameOf(ShutdownHook), target.address());
                 return true;
             }
             catch (const std::exception& e)
             {
-                spdlog::error(
+                LOG_ERROR(
                     "{}: install FAILED ({}) - platform initialization will be refused",
                     NameOf(ShutdownHook),
                     e.what());

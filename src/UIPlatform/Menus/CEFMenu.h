@@ -24,14 +24,12 @@ namespace Meridian::Menus
         Meridian::JS::JSEventFuncInfo m_eventFuncInfo{};
 
         std::shared_ptr<Meridian::Menus::LayerGeometryHolder> m_geometryHolder;
-        std::shared_ptr<spdlog::logger> m_logger = nullptr;
         std::shared_ptr<Meridian::JS::JSFunctionStorage> m_jsFuncStorage = nullptr;
         CefRefPtr<Meridian::Render::IRenderLayer> m_cefRenderLayer = nullptr;
         std::shared_ptr<Meridian::CEF::DefaultBrowser> m_browser = nullptr;
 
     public:
-        CEFMenu(std::shared_ptr<spdlog::logger> a_logger,
-                std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
+        CEFMenu(std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
                 Meridian::JS::JSEventFuncInfo& a_eventFuncInfo,
                 std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider);
         ~CEFMenu() override;
