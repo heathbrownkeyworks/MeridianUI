@@ -11,6 +11,8 @@ Build with:
 cmake --preset release -DMERIDIAN_ENABLE_SIGNING=OFF -DBUILD_TESTING=ON -DMERIDIAN_BUILD_INPUT_TEST=ON
 cmake --build --preset release --parallel 8
 ctest --test-dir build/release -C Release --output-on-failure
+npm --prefix tests/web ci
+node tests/web/node_modules/playwright/cli.js install chromium --only-shell
 node --test tests/web/controller-bridge.test.mjs tests/web/controller-prompts.test.mjs
 npm --prefix tests/web run test:navigation
 ```
