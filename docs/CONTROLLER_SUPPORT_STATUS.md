@@ -1,12 +1,12 @@
 # Meridian controller support status
 
-Updated: 2026-09-10. **Implementation candidate ready for isolated Skyrim/controller testing.**
+Updated: 2026-09-10. **Controller operation confirmed by Heath; ready for mod-specific integration.**
 
 Branch: controllersupport. Implementation commits: 00f2e51 and 10dcfa5d32cdfcb1c746bed8bf0d71d41c390652.
 Baseline: Meridian UI 1.4.0, a169ef4f2e6c0f38a5f1af98eccfff8c8e6aef8f.
 The local approved plan is docs/plans/2026-09-10-controller-support.md.
 
-The candidate is unsigned and has not been deployed or published. It retains the baseline version metadata; **query Meridian.Input/1 to establish API availability**. A production release version has not been assigned.
+The artifacts recorded below were built unsigned and retain the baseline version metadata. Heath has since confirmed that the controller works and looks good in his tested setup. The installed artifact hashes, exact Skyrim runtime and controller model were not recorded with that confirmation. **Query Meridian.Input/1 to establish API availability.** A production release version has not been assigned.
 
 ## Implemented platform contract
 
@@ -51,9 +51,11 @@ SHA-256 snapshot of the built candidate:
 | MeridianUI.dll | 1957114BB9E9BC93736A8B752143FB540315E7576978797462C3EFFC3916D977 |
 | MeridianInputTest.dll | BB40D9E25689C621551497FE5B199591CB71B392054D986D73CE1DFA2ECF0884 |
 
-## Required runtime validation
+## Runtime validation
 
-**Skyrim SE/AE, controller hardware, calibration, paused dispatch cadence, input-hook interoperability, and actual CEF cursor behavior: NOT RUN.**
+**Controller smoke test: PASS, user-confirmed.** Heath reported: "The controller is working. Looks good." Treat that as successful operation in his tested setup and proceed with the separate consumer UI integrations.
+
+Individual SE/AE configurations, calibration, paused dispatch cadence, input-hook interoperability, and the full cursor/lifecycle matrix were not separately documented in that report. Their detailed results remain unrecorded, rather than being inferred from the smoke test.
 
 Use [the runtime matrix](testing/MERIDIAN_CONTROLLER_RUNTIME_GATE.md). Record exact runtime/device/translation settings and candidate hashes. TraceInput logs button/stick samples and per-second dispatch/empty-batch cadence so normalization and paused timing can be verified. SE 1.5.97 and each tested AE configuration remain separate gates. Existing earlier AE validation does not establish controller behavior.
 
