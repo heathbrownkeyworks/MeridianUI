@@ -1,12 +1,12 @@
 # Meridian controller support status
 
-Updated: 2026-09-10. **Controller operation confirmed by Heath; ready for mod-specific integration.**
+Updated: 2026-09-10. **Meridian UI 1.5.0 is signed and deployed; ready for mod-specific integration.**
 
 Branch: controllersupport. Implementation commits: 00f2e51 and 10dcfa5d32cdfcb1c746bed8bf0d71d41c390652.
 Baseline: Meridian UI 1.4.0, a169ef4f2e6c0f38a5f1af98eccfff8c8e6aef8f.
 The local approved plan is docs/plans/2026-09-10-controller-support.md.
 
-Release version: **1.5.0**. Heath authorized building, signing, deploying and pushing this version. Release verification is in progress; the artifact table below records the earlier implementation candidate, not the signed release. **Query Meridian.Input/1 to establish API availability.**
+Release version: **1.5.0**, built from commit 032afecdca71ddd5b916c4e2dfb06c5c0aeb7f2d. The clean Release build, signing, package verification and live deployment all passed. **Query Meridian.Input/1 to establish API availability.**
 
 Heath confirmed that the controller works and looks good in his tested setup. The installed artifact hashes, exact Skyrim runtime and controller model were not recorded with that confirmation.
 
@@ -26,36 +26,44 @@ Implementation files are named in [the consumer guide](MeridianInput-AuthorGuide
 
 | Check | Result |
 |---|---|
-| Full Release build, signing OFF | PASS |
-| MeridianInputTest native consumer and separate web assets | PASS |
-| Full native CTest suite | 63/63 PASS |
+| Clean Release build, signing ON | PASS |
+| MeridianInputTest native consumer and separate web assets | PASS during implementation; excluded from release |
+| Full native CTest suite, including release signatures | 64/64 PASS |
 | Node bridge/prompt contract tests | 9/9 PASS |
 | Playwright browser interaction tests, including diagnostic page/fallback | 18/18 PASS |
 | Normal release manifest and staged Input SDK/guide | PASS |
 | Deliberate fixture DLL and web-directory contamination probes | Both rejected |
 | Git whitespace checks | PASS |
+| Signed runtime DLL/EXE artifacts | All 12 verified |
+| Archive contents and per-file SHA-256 | 288 entries verified |
+| Live deployment paths/hashes and signatures | PASS; 290 files including two preserved files |
+| Public source snapshot and new-commit secret scan | No findings |
 
 Toolchain: MSVC 14.44, C++23, CommonLibSSE-NG 7.4.0 and CEF 152.0.6. Dependencies resolve inside this worktree's build/vcpkg_installed. Browser tests use Playwright 1.63.0 and Chromium headless shell 153.0.8010.12.
 
-Logs: build/controller-full-build.log, build/controller-ctest.log, build/controller-node-tests.log and build/controller-browser-tests.log. The regression suite includes held-on-open/close, passive reconnect gameplay passthrough, mixed forwarding, late-hook visibility, cursor edge balancing, queue invalidation, and existing focus/text/key tests. These are automated model/browser checks, not claims of exercised Skyrim hardware.
+Release evidence is retained outside the repository alongside MeridianUI-1.5.0-signed.zip: build-and-sign.log, ctest.log, node-tests.log, browser-tests.log, signed-runtime-manifest.json, deployed-manifest.json and release-receipt.json. The regression suite includes held-on-open/close, passive reconnect gameplay passthrough, mixed forwarding, late-hook visibility, cursor edge balancing, queue invalidation, and existing focus/text/key tests. These are automated model/browser checks, not claims of exercised Skyrim hardware.
 
-## Earlier implementation candidate artifacts
+## Signed release artifacts
 
-Runtime Data tree: build/release/dist/Release/Data.
-Separate diagnostic mod: build/release/input-test/Release.
-F10 or LeftShoulder + Start opens the diagnostic UI; Escape/back follows its close/modal behavior.
+Runtime Data tree: build/release/dist/Release/Data. Package: MeridianUI-1.5.0-signed.zip.
+The installed runtime is in the existing Nordic Souls MeridianUI mod folder. A verified recovery backup was retained, and the active INI plus the pre-existing MeridianUI.zip were preserved unchanged. The new versioned archive contains only the signed runtime package, without those local files or diagnostic consumers.
 
-SHA-256 snapshot of the built candidate:
+Diagnostic source remains available under src/InputTest with MERIDIAN_BUILD_INPUT_TEST; it is not part of the production package.
+
+SHA-256 of the verified signed artifacts; all three Meridian binaries report file version 1.5.0.0:
 
 | Artifact | SHA-256 |
 |---|---|
-| MeridianUIPlugin.dll | 7C13E922CB7E0CC70CB699A16BD4E4FACAADA6F8CADC9272C9724157CC73A16C |
-| MeridianUI.dll | 1957114BB9E9BC93736A8B752143FB540315E7576978797462C3EFFC3916D977 |
-| MeridianInputTest.dll | BB40D9E25689C621551497FE5B199591CB71B392054D986D73CE1DFA2ECF0884 |
+| MeridianUIPlugin.dll | 7711079EECD7E05317E5889DB26E25A2D4DB9A89575ECC3521721E50A7E41794 |
+| MeridianUI.dll | 0384A21F296147941069523A3A410994DB6399CD4306C9293E9B66AD8C8FA0FE |
+| MeridianCEFSubprocess.exe | DDF080800DBDE7678A702DA8F46897C859CF40D9E48F5CBFA87DB66F2CCBAAA5 |
+| MeridianUI-1.5.0-signed.zip | AAB3788F9D4BE9BF4487E356DB7288033AFF358F00BC1A5814647239CAFFD566 |
 
 ## Runtime validation
 
 **Controller smoke test: PASS, user-confirmed.** Heath reported: "The controller is working. Looks good." Treat that as successful operation in his tested setup and proceed with the separate consumer UI integrations.
+
+A fresh Skyrim launch after the 1.5.0 signed deployment has not been run in this release session. The release changes after that controller confirmation were version metadata and documentation.
 
 Individual SE/AE configurations, calibration, paused dispatch cadence, input-hook interoperability, and the full cursor/lifecycle matrix were not separately documented in that report. Their detailed results remain unrecorded, rather than being inferred from the smoke test.
 
