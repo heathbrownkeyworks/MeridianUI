@@ -31,7 +31,7 @@ if(BUILD_AS_SHARED)
     add_commonlibsse_plugin(
         ${UIPluginProjectName}
         SOURCES ${UIPluginProjectName_src}
-        VERSION ${VERSION}
+        VERSION ${LIB_VERSION}
         AUTHOR "ColdSun"
         EMAIL ""
         USE_ADDRESS_LIBRARY
