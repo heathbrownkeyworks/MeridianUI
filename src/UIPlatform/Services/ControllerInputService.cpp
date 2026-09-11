@@ -348,12 +348,12 @@ namespace Meridian::Services
                     ++m_traceEmpty;
                 if (now - m_lastTrace >= 1.0)
                 {
-                    spdlog::info("Controller dispatch cadence: batches={} empty={} connected={} owner={} dt={}",
-                                 m_traceDispatches,
-                                 m_traceEmpty,
-                                 connected,
-                                 owner,
-                                 dt);
+                    LOG_INFO("Controller dispatch cadence: batches={} empty={} connected={} owner={} dt={}",
+                             m_traceDispatches,
+                             m_traceEmpty,
+                             connected,
+                             owner,
+                             dt);
                     m_traceDispatches = m_traceEmpty = 0;
                     m_lastTrace = now;
                 }
@@ -393,7 +393,7 @@ namespace Meridian::Services
                     auto button = event->AsButtonEvent();
                     auto control = ButtonControl(button);
                     if (m_state.tuning.trace)
-                        spdlog::info("Controller button id={} value={} held={}", button->GetIDCode(), button->Value(), button->HeldDuration());
+                        LOG_INFO("Controller button id={} value={} held={}", button->GetIDCode(), button->Value(), button->HeldDuration());
                     bool force = false;
                     if (control != Control::None && button->Value() > 0 && !m_state.Held(control) &&
                         m_state.Armed(control) && connected && canOpen && m_state.tuning.enabled && !m_shortcutPending)
@@ -458,7 +458,7 @@ namespace Meridian::Services
                     auto stick = event->AsThumbstickEvent();
                     auto control = stick->IsLeft() ? Control::LeftStick : Control::RightStick;
                     if (m_state.tuning.trace)
-                        spdlog::info("Controller stick id={} x={} y={}", stick->GetIDCode(), stick->xValue, stick->yValue);
+                        LOG_INFO("Controller stick id={} x={} y={}", stick->GetIDCode(), stick->xValue, stick->yValue);
                     auto transition = m_state.Stick(control, stick->xValue, stick->yValue);
                     if (transition.consume)
                         consumed.insert(event);

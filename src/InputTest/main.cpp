@@ -1,12 +1,15 @@
 // Standalone diagnostic consumer. No Horde/Romantasy/Tailor dependencies.
 #include <RE/Skyrim.h>
 #include <SKSE/SKSE.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include "MeridianUIAPI/ViewDllLoader.h"
 #include "MeridianUIAPI/InputDllLoader.h"
-#include "RuntimeCompatibility.h"
+#include "Common/Logger.h"
 #include <atomic>
 #include <string>
+using namespace std::literals;
 using namespace Meridian::UI;
 namespace
 {
@@ -113,10 +116,10 @@ namespace
             shortcut.callback = OnShortcut;
             Input::ShortcutHandle id = 0;
             const auto result = input->RegisterShortcut(handles[0], &shortcut, &id);
-            spdlog::info("LB+Start registration result={} handle={}", static_cast<unsigned>(result), id);
+            LOG_INFO("LB+Start registration result={} handle={}", static_cast<unsigned>(result), id);
             Input::ShortcutHandle duplicate = 0;
             const auto conflict = input->RegisterShortcut(handles[0], &shortcut, &duplicate);
-            spdlog::info("duplicate shortcut result={} (3 = Conflict), handle={}", static_cast<unsigned>(conflict), duplicate);
+            LOG_INFO("duplicate shortcut result={} (3 = Conflict), handle={}", static_cast<unsigned>(conflict), duplicate);
         }
     }
     void Initialize()
@@ -125,6 +128,13 @@ namespace
             return;
         Create(0);
         Create(1);
+    }
+    [[nodiscard]] bool InitializeLog()
+    {
+        Meridian::Log::InitOptions options{};
+        options.name = Name;
+        options.logFileStem = fmt::format("{}.log", Name);
+        return Meridian::Log::Init(options) != nullptr;
     }
     class Keys final : public RE::BSTEventSink<RE::InputEvent*>
     {
@@ -142,27 +152,14 @@ namespace
         }
     } keys;
 }
-extern "C" __declspec(dllexport) constinit auto SKSEPlugin_Version =
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, Name);
-extern "C" __declspec(dllexport) bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* skse, SKSE::PluginInfo* info)
-{
-    info->infoVersion = SKSE::PluginInfo::kVersion;
-    info->name = Name;
-    info->version = 1;
-    return !skse->IsEditor() && skse->RuntimeVersion() >= SKSE::RUNTIME_SSE_1_5_39;
-}
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
     if (skse->IsEditor())
         return false;
-    SKSE::Init(skse);
-    if (auto dir = SKSE::log::log_directory())
-    {
-        auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>((*dir / "MeridianInputTest.log").string(), true);
-        auto log = std::make_shared<spdlog::logger>(Name, sink);
-        spdlog::set_default_logger(log);
-        log->flush_on(spdlog::level::info);
-    }
+    SKSE::Init(skse, false);
+    if (!InitializeLog())
+        return false;
+    LOG_INFO("{} Plugin Loaded", Name);
     return SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message* message) {
         if (message->type == SKSE::MessagingInterface::kInputLoaded)
         {
@@ -170,7 +167,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
             views = View::Query(&settings, Name);
             input = Input::Query(&settings, Name);
             RE::BSInputDeviceManager::GetSingleton()->AddEventSink(&keys);
-            spdlog::info("View/1={} Input/1={}; F10 or LB+Start opens fixture", views != nullptr, input != nullptr);
+            LOG_INFO("View/1={} Input/1={}; F10 or LB+Start opens fixture", views != nullptr, input != nullptr);
             Initialize();
         }
         else if (message->type == SKSE::MessagingInterface::kDataLoaded)

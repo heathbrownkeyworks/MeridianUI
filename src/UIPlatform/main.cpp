@@ -176,7 +176,7 @@ extern "C"
             if (Meridian::Controllers::ViewAPIController::GetSingleton().IsShuttingDown()) return false;
             *a_outInterface = static_cast<Meridian::UI::Input::IInputAPI*>(
                 &Meridian::Controllers::InputAPIController::GetSingleton());
-            spdlog::info("Meridian.Input/1 requested by '{}'", a_consumerName ? a_consumerName : "unknown");
+            LOG_INFO("Meridian.Input/1 requested by '{}'", a_consumerName ? a_consumerName : "unknown");
             return true;
         }
         if (isViewRequest)
