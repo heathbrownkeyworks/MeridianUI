@@ -2,10 +2,21 @@
 
 // Common logging facade -- replaces direct spdlog::trace/debug/info/warn/error/critical
 // call sites with LOG_TRACE/LOG_DEBUG/LOG_INFO/LOG_WARN/LOG_ERROR/LOG_CRITICAL(...).
-//
-// Requires the includer to have already brought in <spdlog/spdlog.h>,
-// <spdlog/sinks/msvc_sink.h>, <spdlog/sinks/basic_file_sink.h> and <SKSE/SKSE.h>
-// (every module PCH already does, ahead of this header).
+
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/spdlog.h>
+
+#ifndef MERIDIAN_LOG_NO_SKSE
+    #include <SKSE/SKSE.h>
+#endif
 
 namespace Meridian::Log
 {

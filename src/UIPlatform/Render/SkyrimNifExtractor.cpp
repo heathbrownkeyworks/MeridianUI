@@ -561,7 +561,12 @@ namespace Meridian::Render::NifPreview
             {
                 return ShapeResult::Unsupported;
             }
-            if (boneCount > MAX_SKIN_BONES || a_skinInstance->bones == nullptr)
+            // NiSkinData::boneData / GetBoneData() aren't reachable here (private, and the
+            // member itself is compiled out under SKYRIM_CROSS_VR), so re-derive the pointer
+            // via the same relocatable-member lookup GetBoneData() uses internally.
+            // likely a bug/oversight in commonlib so this may be temporary.
+            const auto* boneData = REL::RelocateMember<const RE::NiSkinData::BoneData*>(skinData, 0x50, 0x50);
+            if (boneCount > MAX_SKIN_BONES || a_skinInstance->bones == nullptr || boneData == nullptr)
             {
                 return ShapeResult::Malformed;
             }
