@@ -18,7 +18,7 @@ namespace Meridian::Render::Detail
     #define MERIDIAN_FT_LOG_INFO(msg, ...) Meridian::Render::Detail::FrameTransportTestLog(stdout, msg __VA_OPT__(, ) __VA_ARGS__)
 #else
     #include <spdlog/spdlog.h>
-    #define MERIDIAN_FT_LOG_ERROR(msg, ...) spdlog::error(msg __VA_OPT__(, ) __VA_ARGS__)
-    #define MERIDIAN_FT_LOG_WARN(msg, ...) spdlog::warn(msg __VA_OPT__(, ) __VA_ARGS__)
-    #define MERIDIAN_FT_LOG_INFO(msg, ...) spdlog::info(msg __VA_OPT__(, ) __VA_ARGS__)
+    #define MERIDIAN_FT_LOG_ERROR(msg, ...) LOG_ERROR(msg __VA_OPT__(, ) __VA_ARGS__)
+    #define MERIDIAN_FT_LOG_WARN(msg, ...) LOG_WARN(msg __VA_OPT__(, ) __VA_ARGS__)
+    #define MERIDIAN_FT_LOG_INFO(msg, ...) LOG_INFO(msg __VA_OPT__(, ) __VA_ARGS__)
 #endif

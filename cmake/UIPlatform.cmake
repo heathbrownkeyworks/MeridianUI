@@ -39,7 +39,6 @@ if(BUILD_AS_SHARED)
             LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${NL_UI_PATH}
             LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${NL_UI_PATH}
             #ARCHIVE_OUTPUT_DIRECTORY ${NL_UI_PATH}/archive
-            #PDB_OUTPUT_DIRECTORY ${NL_UI_PATH}
     )
 else()
 add_library(${UIPlatformProjectName} STATIC ${UIPlatformProjectName_src})
@@ -50,14 +49,17 @@ target_include_directories(
     ${UIPlatformProjectName}
     PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CEFSubprocess
         ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
     PRIVATE
-        #${SIMPLEINI_INCLUDE_DIRS}
         ${MERIDIAN_NIF_SHADER_OUTPUT_DIR}
 )
 
 set_compile_options(${UIPlatformProjectName})
+if(BUILD_AS_SHARED)
+    set_target_properties(${UIPlatformProjectName} PROPERTIES PDB_OUTPUT_DIRECTORY ${NL_UI_PATH})
+endif()
 
 target_precompile_headers(
     ${UIPlatformProjectName}

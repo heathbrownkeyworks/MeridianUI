@@ -20,7 +20,15 @@ if(BUILD_AS_SHARED AND MERIDIAN_BUILD_NIF_TEST)
         FILES ${NifTestProjectName_src}
     )
 
-    add_library(${NifTestProjectName} SHARED ${NifTestProjectName_src})
+    add_commonlibsse_plugin(
+        ${NifTestProjectName}
+        SOURCES ${NifTestProjectName_src}
+        VERSION ${LIB_VERSION}
+        AUTHOR "ColdSun"
+        EMAIL ""
+        USE_ADDRESS_LIBRARY
+        MINIMUM_SKSE_VERSION "2.0.1.04"
+    )
     set(NIF_TEST_OUTPUT_ROOT "${CMAKE_BINARY_DIR}/nif-test")
     set_target_properties(
         ${NifTestProjectName}
@@ -37,10 +45,10 @@ if(BUILD_AS_SHARED AND MERIDIAN_BUILD_NIF_TEST)
     target_include_directories(
         ${NifTestProjectName}
         PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/src/UIPlatform
             ${CMAKE_CURRENT_SOURCE_DIR}/src/NifTest
     )
-    target_link_libraries(${NifTestProjectName} PUBLIC CommonLibSSE::CommonLibSSE)
     set_compile_options(${NifTestProjectName})
     target_precompile_headers(${NifTestProjectName} PRIVATE "src/NifTest/PCH.h")
 

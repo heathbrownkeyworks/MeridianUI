@@ -86,14 +86,14 @@ namespace Meridian::Menus
         const auto scaleformManager = RE::BSScaleformManager::GetSingleton();
         if (scaleformManager == nullptr)
         {
-            spdlog::error("{}: BSScaleformManager singleton is null", NameOf(FocusMenu));
+            LOG_ERROR("{}: BSScaleformManager singleton is null", NameOf(FocusMenu));
             return;
         }
 
         const bool loaded = scaleformManager->LoadMovieEx(this, "cursormenu", []([[maybe_unused]] RE::GFxMovieDef* a_def) {});
         if (!loaded || uiMovie == nullptr)
         {
-            spdlog::error("{}: failed to load cursormenu movie — focus degrades to input-capture only", NameOf(FocusMenu));
+            LOG_ERROR("{}: failed to load cursormenu movie — focus degrades to input-capture only", NameOf(FocusMenu));
             return;
         }
 

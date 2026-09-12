@@ -13,7 +13,7 @@ namespace Meridian::Hooks
             const REL::Relocation<std::uintptr_t> callSite{presentId, 0x9};
             if (!IsExpectedCallSite(callSite.address(), CallEncoding::Relative5))
             {
-                spdlog::error(
+                LOG_ERROR(
                     "{}: install refused at {:X}: expected E8 rel32 call for Skyrim {}",
                     NameOf(PresentHook),
                     callSite.address(),
@@ -24,7 +24,7 @@ namespace Meridian::Hooks
             s_timing.store(a_timing, std::memory_order_release);
             s_original = trampoline.write_call<5>(callSite.address(), &PresentHook::Detour);
             s_installed.store(true, std::memory_order_release);
-            spdlog::info(
+            LOG_INFO(
                 "{}: installed at {:X}; compositor timing={}",
                 NameOf(PresentHook),
                 callSite.address(),
@@ -33,7 +33,7 @@ namespace Meridian::Hooks
         }
         catch (const std::exception& e)
         {
-            spdlog::error("{}: install FAILED ({}) — platform rendering unavailable, browser creation will be refused", NameOf(PresentHook), e.what());
+            LOG_ERROR("{}: install FAILED ({}) — platform rendering unavailable, browser creation will be refused", NameOf(PresentHook), e.what());
             return false;
         }
     }
@@ -51,11 +51,11 @@ namespace Meridian::Hooks
         }
         catch (const std::exception& error)
         {
-            spdlog::error("{}: compositor failed: {}", NameOf(PresentHook), error.what());
+            LOG_ERROR("{}: compositor failed: {}", NameOf(PresentHook), error.what());
         }
         catch (...)
         {
-            spdlog::error("{}: compositor failed with an unknown exception", NameOf(PresentHook));
+            LOG_ERROR("{}: compositor failed with an unknown exception", NameOf(PresentHook));
         }
     }
 

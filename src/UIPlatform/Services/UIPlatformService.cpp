@@ -9,43 +9,30 @@
 
 namespace Meridian::Services
 {
-    UIPlatformService::UIPlatformService()
-    {
-        m_logger = spdlog::default_logger();
-    }
-
     bool UIPlatformService::IsInited()
     {
         return s_isUIPInited.load(std::memory_order_acquire);
     }
 
-    bool UIPlatformService::Init(std::shared_ptr<spdlog::logger> a_logger,
-                                 std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider)
+    bool UIPlatformService::Init(std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider)
     {
         std::lock_guard locker(s_uipInitMutex);
         if (s_isUIPInited.load(std::memory_order_acquire))
         {
-            m_logger->warn("{}: already inited", NameOf(UIPlatformService));
+            LOG_WARN("{}: already inited", NameOf(UIPlatformService));
             return false;
         }
-
-        if (a_logger == nullptr)
-        {
-            spdlog::error("{}: has null {}", NameOf(UIPlatformService), NameOf(a_logger));
-            return false;
-        }
-        m_logger = a_logger;
 
         // Reject retries before settings providers can construct CEF values.
         if (CEFService::GetLifecycleState() == CEFService::LifecycleState::InitializationFailed)
         {
-            m_logger->error("{}: CEF initialization previously failed; restart Skyrim before trying again", NameOf(UIPlatformService));
+            LOG_ERROR("{}: CEF initialization previously failed; restart Skyrim before trying again", NameOf(UIPlatformService));
             return false;
         }
 
         if (a_settingsProvider == nullptr)
         {
-            m_logger->error("{}: has null {}", NameOf(UIPlatformService), NameOf(a_settingsProvider));
+            LOG_ERROR("{}: has null {}", NameOf(UIPlatformService), NameOf(a_settingsProvider));
             return false;
         }
 
@@ -53,25 +40,25 @@ namespace Meridian::Services
 
         if (!Meridian::Hooks::PresentHook::IsInstalled())
         {
-            m_logger->error("{}: present hook not installed — refusing to initialize (no rendering path)", NameOf(UIPlatformService));
+            LOG_ERROR("{}: present hook not installed — refusing to initialize (no rendering path)", NameOf(UIPlatformService));
             return false;
         }
 
         if (!Meridian::Hooks::InputDispatchHook::IsInstalled())
         {
-            m_logger->error("{}: input dispatch hook not installed — refusing to initialize (focused input cannot be isolated)", NameOf(UIPlatformService));
+            LOG_ERROR("{}: input dispatch hook not installed — refusing to initialize (focused input cannot be isolated)", NameOf(UIPlatformService));
             return false;
         }
 
         if (!Meridian::Hooks::ShutdownHook::IsInstalled())
         {
-            m_logger->error("{}: shutdown hook not installed - refusing to initialize (CEF cannot be shut down safely)", NameOf(UIPlatformService));
+            LOG_ERROR("{}: shutdown hook not installed - refusing to initialize (CEF cannot be shut down safely)", NameOf(UIPlatformService));
             return false;
         }
 
-        if (!Meridian::Render::RenderHost::GetSingleton().Init(m_logger))
+        if (!Meridian::Render::RenderHost::GetSingleton().Init())
         {
-            m_logger->error("{}: RenderHost init failed", NameOf(UIPlatformService));
+            LOG_ERROR("{}: RenderHost init failed", NameOf(UIPlatformService));
             return false;
         }
 
@@ -82,12 +69,12 @@ namespace Meridian::Services
         }
         catch (const std::exception& error)
         {
-            m_logger->error("{}: failed to CEFInitialize, {}", NameOf(UIPlatformService), error.what());
+            LOG_ERROR("{}: failed to CEFInitialize, {}", NameOf(UIPlatformService), error.what());
             return false;
         }
         catch (...)
         {
-            m_logger->error("{}: failed to CEFInitialize", NameOf(UIPlatformService));
+            LOG_ERROR("{}: failed to CEFInitialize", NameOf(UIPlatformService));
             return false;
         }
 
@@ -106,8 +93,7 @@ namespace Meridian::Services
 
     bool UIPlatformService::InitAndShowMenuWithSettings(std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider)
     {
-        const auto logger = spdlog::default_logger();
-        return Init(logger, a_settingsProvider);
+        return Init(a_settingsProvider);
     }
 
     void UIPlatformService::Shutdown()
@@ -117,7 +103,7 @@ namespace Meridian::Services
             return;
         }
 
-        m_logger->info("{}: stopping menu work and draining CEF browsers", NameOf(UIPlatformService));
+        LOG_INFO("{}: stopping menu work and draining CEF browsers", NameOf(UIPlatformService));
 
         Meridian::Services::InputRouter::GetSingleton().SetShuttingDown(true);
         Meridian::Services::ControllerInputService::GetSingleton().Shutdown();
@@ -128,11 +114,11 @@ namespace Meridian::Services
         const auto browsersClosed = Meridian::Services::CEFService::CloseAllBrowsersAndWait(browserCloseTimeout);
 
         Meridian::Render::RenderHost::GetSingleton().ClearAllSubMenu();
-        m_logger->info("{}: released all browser menu owners", NameOf(UIPlatformService));
+        LOG_INFO("{}: released all browser menu owners", NameOf(UIPlatformService));
 
         if (!browsersClosed)
         {
-            m_logger->critical("{}: browser drain failed; skipping unsafe CefShutdown", NameOf(UIPlatformService));
+            LOG_CRITICAL("{}: browser drain failed; skipping unsafe CefShutdown", NameOf(UIPlatformService));
             s_isUIPInited.store(false, std::memory_order_release);
             return;
         }
@@ -143,11 +129,11 @@ namespace Meridian::Services
         }
         catch (const std::exception& error)
         {
-            m_logger->error("{}: error while CEFShutdown, {}", NameOf(UIPlatformService), error.what());
+            LOG_ERROR("{}: error while CEFShutdown, {}", NameOf(UIPlatformService), error.what());
         }
         catch (...)
         {
-            m_logger->error("{}: error while CEFShutdown", NameOf(UIPlatformService));
+            LOG_ERROR("{}: error while CEFShutdown", NameOf(UIPlatformService));
         }
 
         s_isUIPInited.store(false, std::memory_order_release);
@@ -157,8 +143,7 @@ namespace Meridian::Services
                                                                          Meridian::JS::JSEventFuncInfo& a_eventFuncInfo,
                                                                          std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider)
     {
-        return std::make_shared<Meridian::Menus::CEFMenu>(m_logger,
-                                                    a_funcStorage,
+        return std::make_shared<Meridian::Menus::CEFMenu>(a_funcStorage,
                                                     a_eventFuncInfo,
                                                     a_settingsProvider);
     }

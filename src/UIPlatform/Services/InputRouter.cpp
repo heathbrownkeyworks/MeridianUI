@@ -32,7 +32,7 @@ namespace Meridian::Services
     {
         if (m_registered.load(std::memory_order_acquire))
         {
-            spdlog::warn("{}: Register() called more than once — ignoring", NameOf(InputRouter));
+            LOG_WARN("{}: Register() called more than once — ignoring", NameOf(InputRouter));
             return;
         }
 

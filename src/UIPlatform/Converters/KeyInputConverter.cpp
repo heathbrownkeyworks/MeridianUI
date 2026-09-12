@@ -66,7 +66,7 @@ namespace Meridian::Converters
         const auto hklCount = GetKeyboardLayoutList(0, nullptr);
         if (hklCount <= 0)
         {
-            spdlog::error("GetKeyboardLayoutList failed, {}", GetLastErrorAsString().data());
+            LOG_ERROR("GetKeyboardLayoutList failed, {}", GetLastErrorAsString().data());
             clearHKLs();
             return;
         }
@@ -75,18 +75,18 @@ namespace Meridian::Converters
         const auto hklCount2 = GetKeyboardLayoutList(hklCount, s_hklVector.data());
         if (hklCount2 <= 0)
         {
-            spdlog::error("Second call of GetKeyboardLayoutList failed, {}", GetLastErrorAsString().data());
+            LOG_ERROR("Second call of GetKeyboardLayoutList failed, {}", GetLastErrorAsString().data());
             clearHKLs();
             return;
         }
         else if (hklCount2 != hklCount)
         {
-            spdlog::error("GetKeyboardLayoutList returned a different value than the previous call");
+            LOG_ERROR("GetKeyboardLayoutList returned a different value than the previous call");
             clearHKLs();
             return;
         }
 
-        spdlog::info("KeyInputConverter: Found {} keyboard layouts", s_hklVector.size());
+        LOG_INFO("KeyInputConverter: Found {} keyboard layouts", s_hklVector.size());
 
         s_hklVectorIndex = 0;
         s_currentHKL = s_hklVector[s_hklVectorIndex];

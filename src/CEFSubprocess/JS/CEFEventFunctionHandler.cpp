@@ -20,7 +20,7 @@ namespace Meridian::JS
             Meridian::CEF::CEFV8ContextGuard v8ContextGuard(context);
             if (!v8ContextGuard.IsEntered())
             {
-                spdlog::error("{}[{}]: can't enter v8 context", NameOf(CEFEventFunctionHandler::CallEventFunc), ::GetCurrentProcessId());
+                LOG_ERROR("{}[{}]: can't enter v8 context", NameOf(CEFEventFunctionHandler::CallEventFunc), ::GetCurrentProcessId());
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace Meridian::JS
         if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsFunction())
         {
             exception = "This function has wrong signature! First argument should be event name (string), second should be function callback";
-            spdlog::error("{}: trying to call event function with wrong signature, \"{}\"", NameOf(CEFEventFunctionHandler), name.ToString().c_str());
+            LOG_ERROR("{}: trying to call event function with wrong signature, \"{}\"", NameOf(CEFEventFunctionHandler), name.ToString().c_str());
             return true;
         }
 

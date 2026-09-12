@@ -50,7 +50,7 @@ namespace Meridian::Render
             a_width = static_cast<int>(sharedTextureDesc.Width);
             a_height = static_cast<int>(sharedTextureDesc.Height);
 
-            spdlog::info("CEFSyncCopyRenderLayer: texture created");
+            LOG_INFO("CEFSyncCopyRenderLayer: texture created");
         }
 
         D3D11_BOX dirtyRect;
@@ -96,13 +96,13 @@ namespace Meridian::Render
             const auto removedReason = m_renderData->device->GetDeviceRemovedReason();
             if (FAILED(removedReason))
             {
-                spdlog::error("CEFSyncCopyRenderLayer: device removed while waiting for GPU copy, code {:X}", removedReason);
+                LOG_ERROR("CEFSyncCopyRenderLayer: device removed while waiting for GPU copy, code {:X}", removedReason);
                 return;
             }
 
             if (std::chrono::steady_clock::now() >= queryDeadline)
             {
-                spdlog::error("CEFSyncCopyRenderLayer: timed out waiting for GPU copy");
+                LOG_ERROR("CEFSyncCopyRenderLayer: timed out waiting for GPU copy");
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace Meridian::Render
 
         if (FAILED(queryResult))
         {
-            spdlog::error("CEFSyncCopyRenderLayer: GPU query failed, code {:X}", queryResult);
+            LOG_ERROR("CEFSyncCopyRenderLayer: GPU query failed, code {:X}", queryResult);
         }
     }
 
@@ -122,7 +122,7 @@ namespace Meridian::Render
         const auto hr = m_renderData->device->QueryInterface(IID_PPV_ARGS(&m_device1));
         if (FAILED(hr))
         {
-            spdlog::error("CEFSyncCopyRenderLayer::Init() - failed QueryInterface(), code {:X}", hr);
+            LOG_ERROR("CEFSyncCopyRenderLayer::Init() - failed QueryInterface(), code {:X}", hr);
         }
     }
 
@@ -232,7 +232,7 @@ namespace Meridian::Render
                                          int width,
                                          int height)
     {
-        spdlog::error("CEFCopyRenderLayer::OnPaint called");
+        LOG_ERROR("CEFCopyRenderLayer::OnPaint called");
     }
 
     void CEFSyncCopyRenderLayer::OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
@@ -243,7 +243,7 @@ namespace Meridian::Render
         if (m_renderData == nullptr ||
             m_device1 == nullptr)
         {
-            spdlog::error("CEFSyncCopyRenderLayer::OnAcceleratedPaint() - device or renderData is nullptr");
+            LOG_ERROR("CEFSyncCopyRenderLayer::OnAcceleratedPaint() - device or renderData is nullptr");
             return;
         }
 

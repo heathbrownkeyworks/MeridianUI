@@ -17,6 +17,7 @@ packages/
 #Other stuff
 build
 /build-*/
+build*.txt
 .cache
 [Aa]ssets-nc*/
 CMakeUserPresets.json
@@ -30,6 +31,7 @@ docs/plans/
 .env.*
 !.env.example
 signing/metadata.json
+signing/local
 *.key
 *.pem
 *.pfx

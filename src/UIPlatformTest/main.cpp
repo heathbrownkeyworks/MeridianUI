@@ -1,7 +1,5 @@
 #include "PCH.h"
 
-#include "UIPlatform/RuntimeCompatibility.h"
-
 #include "MeridianUIAPI/API.h"
 #include "MeridianUIAPI/DllLoader.h"
 #include "MeridianUIAPI/NifViewDllLoader.h"
@@ -11,53 +9,14 @@
 
 #include <fstream>
 
-// AE (1.6+) plugin declaration. Version-independent via Address Library.
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version =
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME);
 
-static_assert(Meridian::RuntimeCompatibility::HasAddressLibraryV5(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME)));
-static_assert(Meridian::RuntimeCompatibility::HasUpdatedStructs(
-    Meridian::RuntimeCompatibility::MakePluginVersionData(1, PLUGIN_NAME)));
-
-// SE (1.5.x) plugin declaration
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
+[[nodiscard]] bool InitLog()
 {
-    a_info->infoVersion = SKSE::PluginInfo::kVersion;
-    a_info->name = PLUGIN_NAME;
-    a_info->version = 1;
-
-    if (a_skse->IsEditor() || a_skse->RuntimeVersion() < SKSE::RUNTIME_SSE_1_5_39)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void InitLog()
-{
-#ifdef _DEBUG
-    const auto level = spdlog::level::trace;
-    auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-#else
-    const auto level = spdlog::level::info;
-    auto path = logger::log_directory();
-    if (!path)
-    {
-        SKSE::stl::report_and_fail("Failed to find standard logging directory"sv);
-    }
-
-    *path /= fmt::format("{}.log"sv, PLUGIN_NAME);
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-#endif
-
-    auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-    log->set_level(level);
-    log->flush_on(level);
-
-    spdlog::set_default_logger(std::move(log));
-    spdlog::set_pattern("[%T.%e] [%^%l%$] : %v"s);
+    Meridian::Log::InitOptions options{};
+    options.name = "global log"s;
+    options.logFileStem = fmt::format("{}.log", PLUGIN_NAME);
+    options.pattern = "[%T.%e] [%^%l%$] : %v"s;
+    return Meridian::Log::Init(options) != nullptr;
 }
 
 // The marker selects the legacy renderer so one fixture build can compare
@@ -69,11 +28,11 @@ static Meridian::UI::Settings BuildFixtureSettings()
     if (std::filesystem::exists(Meridian::Paths::MeridianRoot(Meridian::Paths::GameRoot()) / "tests" / "use_synccopy.txt"))
     {
         settings.rendererType = Meridian::UI::RendererType::SyncCopy;
-        spdlog::info("fixture: use_synccopy.txt present — requesting SyncCopy renderer");
+        LOG_INFO("fixture: use_synccopy.txt present — requesting SyncCopy renderer");
     }
     else
     {
-        spdlog::info("fixture: no marker — requesting RingBuffer renderer");
+        LOG_INFO("fixture: no marker — requesting RingBuffer renderer");
     }
     return settings;
 }
@@ -106,7 +65,7 @@ static void StartRenderLayerFixture(Meridian::UI::Settings* a_settings)
     s_renderLayers = Meridian::UI::RenderLayer::Query(a_settings, PLUGIN_NAME);
     if (s_renderLayers == nullptr)
     {
-        spdlog::error("render-layer fixture: Meridian.RenderLayer/1 query failed");
+        LOG_ERROR("render-layer fixture: Meridian.RenderLayer/1 query failed");
         return;
     }
 
@@ -122,11 +81,11 @@ static void StartRenderLayerFixture(Meridian::UI::Settings* a_settings)
     s_checkerboard = s_renderLayers->CreateSurface(&info);
     if (s_checkerboard == Meridian::UI::RenderLayer::INVALID_SURFACE_HANDLE)
     {
-        spdlog::error("render-layer fixture: checkerboard creation failed");
+        LOG_ERROR("render-layer fixture: checkerboard creation failed");
         return;
     }
 
-    spdlog::info("render-layer fixture: visible checkerboard handle {}", s_checkerboard);
+    LOG_INFO("render-layer fixture: visible checkerboard handle {}", s_checkerboard);
 
     const auto testsRoot = Meridian::Paths::MeridianRoot(Meridian::Paths::GameRoot()) / "tests";
     if (!std::filesystem::exists(testsRoot / "enable_nif_view.txt"))
@@ -144,7 +103,7 @@ static void StartRenderLayerFixture(Meridian::UI::Settings* a_settings)
     const auto first = modelPath.find_first_not_of(" \t");
     if (first == std::string::npos)
     {
-        spdlog::error("NIF fixture: Data\\MeridianUI\\tests\\nif_path.txt is missing or empty");
+        LOG_ERROR("NIF fixture: Data\\MeridianUI\\tests\\nif_path.txt is missing or empty");
         return;
     }
     modelPath.erase(0, first);
@@ -153,7 +112,7 @@ static void StartRenderLayerFixture(Meridian::UI::Settings* a_settings)
     s_nifView = Meridian::UI::NifView::Query(a_settings, PLUGIN_NAME);
     if (s_nifView == nullptr)
     {
-        spdlog::error("NIF fixture: Meridian.NifView/1 query failed");
+        LOG_ERROR("NIF fixture: Meridian.NifView/1 query failed");
         return;
     }
 
@@ -163,10 +122,10 @@ static void StartRenderLayerFixture(Meridian::UI::Settings* a_settings)
     loadInfo.frameOnLoad = true;
     if (!s_nifView->LoadModel(&loadInfo))
     {
-        spdlog::error("NIF fixture: LoadModel rejected '{}'", modelPath);
+        LOG_ERROR("NIF fixture: LoadModel rejected '{}'", modelPath);
         return;
     }
-    spdlog::info("NIF fixture: queued '{}' on surface {}", modelPath, s_checkerboard);
+    LOG_INFO("NIF fixture: queued '{}' on surface {}", modelPath, s_checkerboard);
 }
 
 void Init1stMethodToGetAPI()
@@ -192,19 +151,19 @@ void Init1stMethodToGetAPI()
         }
     });
     SKSE::GetMessagingInterface()->RegisterListener(Meridian::UI::LibVersion::PROJECT_NAME, [](SKSE::MessagingInterface::Message* a_msg) {
-        spdlog::info("Received message({}) from \"{}\"", a_msg->type, a_msg->sender ? a_msg->sender : "nullptr");
+        LOG_INFO("Received message({}) from \"{}\"", a_msg->type, a_msg->sender ? a_msg->sender : "nullptr");
         switch (a_msg->type)
         {
         case Meridian::UI::APIMessageType::ResponseVersion: {
             const auto versionInfo = reinterpret_cast<Meridian::UI::ResponseVersionMessage*>(a_msg->data);
-            spdlog::info("MeridianUI version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(versionInfo->libVersion), Meridian::UI::LibVersion::GetMinorVersion(versionInfo->libVersion));
+            LOG_INFO("MeridianUI version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(versionInfo->libVersion), Meridian::UI::LibVersion::GetMinorVersion(versionInfo->libVersion));
 
             const auto majorAPIVersion = Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion);
             // If the major version is different from ours, then using the API may cause problems
             if (majorAPIVersion != Meridian::UI::APIVersion::MAJOR)
             {
                 s_canUseAPI = false;
-                spdlog::error("Can't using this API version of MeridianUI. We have {}.{} and installed is {}.{}",
+                LOG_ERROR("Can't using this API version of MeridianUI. We have {}.{} and installed is {}.{}",
                               Meridian::UI::APIVersion::MAJOR,
                               Meridian::UI::APIVersion::MINOR,
                               Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
@@ -213,7 +172,7 @@ void Init1stMethodToGetAPI()
             else
             {
                 s_canUseAPI = true;
-                spdlog::info("API version is ok. We have {}.{} and installed is {}.{}",
+                LOG_INFO("API version is ok. We have {}.{} and installed is {}.{}",
                              Meridian::UI::APIVersion::MAJOR,
                              Meridian::UI::APIVersion::MINOR,
                              Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
@@ -225,7 +184,7 @@ void Init1stMethodToGetAPI()
             auto api = reinterpret_cast<Meridian::UI::ResponseAPIMessage*>(a_msg->data)->API;
             if (api == nullptr)
             {
-                spdlog::error("API is nullptr");
+                LOG_ERROR("API is nullptr");
                 break;
             }
             Meridian::UI::TestCase::StartTests(api);
@@ -255,12 +214,12 @@ void Init2ndMethodToGetAPI()
                 }
                 else
                 {
-                    spdlog::error("Failed to load MeridianUI API :(");
+                    LOG_ERROR("Failed to load MeridianUI API :(");
                 }
             }
             catch (const std::exception& err)
             {
-                spdlog::error("Failed to load MeridianUI API, {}", err.what());
+                LOG_ERROR("Failed to load MeridianUI API, {}", err.what());
             }
             break;
         default:
@@ -299,12 +258,18 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
     }
 
     // SKSE
-    SKSE::Init(a_skse);
+    SKSE::Init(a_skse, false);
     SKSE::AllocTrampoline(1024);
-    InitLog();
+    if (!InitLog())
+    {
+        return false;
+    }
+
+    LOG_INFO("{} {} Plugin Loaded", Meridian::UI::LibVersion::PROJECT_NAME,Meridian::UI::LibVersion::AS_STRING);
+
     if (!FixtureEnabled())
     {
-        spdlog::info("fixture dormant — no enable marker (Data\\MeridianUI\\tests\\enable_fixture.txt)");
+        LOG_INFO("fixture dormant — no enable marker (Data\\MeridianUI\\tests\\enable_fixture.txt)");
         return true;
     }
     // First method may not work correctly with some plugins

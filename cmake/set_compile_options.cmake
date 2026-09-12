@@ -3,12 +3,14 @@ function(set_compile_options target)
     target_compile_features(
         ${target}
         PRIVATE
-            cxx_std_20
+            cxx_std_23
     )
 
     target_compile_options(
         ${target}
         PRIVATE
+            "/EHsc"     # C++ exception handling model
+            "/W4"       # Warning level 4
             "/sdl"      # Enable Additional Security Checks
             "/utf-8"    # Set Source and Executable character sets to UTF-8
             "/Zi"       # Debug Information Format
@@ -17,9 +19,24 @@ function(set_compile_options target)
             "/MP"
 
             "/Zc:alignedNew"        # C++17 over-aligned allocation
-            "/Zc:__cplusplus"       # Enable updated __cplusplus macro
-            "/Zc:externConstexpr"   # Enable extern constexpr variables
-            "/Zc:preprocessor"      # Enable preprocessor conformance mode
+            #"/Zc:auto"              # Enforce 'auto' type deduction
+            "/Zc:__cplusplus"       # Correct __cplusplus macro value
+            #"/Zc:externC"           # Enforce extern "C" linkage rules
+            "/Zc:externConstexpr"   # Enforce extern constexpr rules
+            #"/Zc:forScope"          # Enforce for-loop scope rules
+            #"/Zc:hiddenFriend"      # Enforce hidden friend functions
+            #"/Zc:implicitNoexcept"  # Enforce implicit noexcept
+            #"/Zc:lambda"            # Enforce lambda rules
+            #"/Zc:noexceptTypes"     # Enforce noexcept type rules
+            "/Zc:preprocessor"      # Enforce preprocessor rules
+            #"/Zc:referenceBinding"  # Enforce reference binding rules
+            #"/Zc:rvalueCast"        # Enforce rvalue cast rules
+            #"/Zc:sizedDealloc"      # Enforce sized deallocation
+            #"/Zc:strictStrings"     # Enforce strict string rules
+            #"/Zc:ternary"           # Enforce ternary operator rules
+            "/Zc:threadSafeInit"    # Enforce thread-safe initialization
+            #"/Zc:trigraphs"         # Enforce trigraph rules
+            "/Zc:wchar_t" # Enforce wchar_t rules
 
             "/wd4200" # nonstandard extension used : zero-sized array in struct/union
             "/wd4100" # unreferenced formal parameter
@@ -33,16 +50,15 @@ function(set_compile_options target)
         set_target_properties(
             ${target}
             PROPERTIES
-            MSVC_RUNTIME_LIBRARY
-                "MultiThreaded$<$<CONFIG:Debug>:Debug>"
             PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/symbols/$<CONFIG>"
         )
 
         target_link_options(
             ${target}
             PRIVATE
+                "/ignore:4099" # libcef_dll_wrapper.lib ships no PDB; harmless with our own /DEBUG builds
                 "$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF;/DEBUG:FULL;>"
-                "$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;>"
+                "$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL;>"
         )
 
         target_compile_definitions(
@@ -68,10 +84,14 @@ function(set_external_project_options target)
         )
     endif()
 
-    set_target_properties(
-      ${target}
-      PROPERTIES CMAKE_CXX_FLAGS
-          "/EHsc /MP /W4 /WX /external:W0"
+    target_compile_options(
+        ${target}
+        PRIVATE
+            "/EHsc"
+            "/MP"
+            "/W4"
+            "/WX"
+            "/external:W0"
     )
 
     if (WIN32)

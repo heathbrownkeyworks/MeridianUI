@@ -68,7 +68,6 @@ static std::string GetLastErrorAsString()
 using namespace std::literals;
 using namespace std::string_literals;
 
-namespace logger = SKSE::log;
 using SKSE::stl::adjust_pointer;
 using SKSE::stl::not_null;
 using SKSE::stl::unrestricted_cast;
@@ -98,6 +97,7 @@ inline constexpr float KEY_CHAR_REPEAT_DELAY = 0.06f;
 
 #include "IPC.h"
 
+#include "Common/Logger.h"
 #include "MeridianUIAPI/API.h"
 #include "Utils/BSTArrayExtension.h"
 #include "Utils/CheckHresult.h"

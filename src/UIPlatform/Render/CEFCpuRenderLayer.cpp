@@ -17,7 +17,7 @@ namespace Meridian::Render
             const auto hr = surface->UploadLatest(m_renderData->device, m_renderData->deviceContext);
             std::uint32_t suppressed = 0;
             if (FAILED(hr) && m_uploadErrors.ShouldLog(suppressed))
-                spdlog::error("CpuUpload: texture upload failed ({:#010x}, {} suppressed)", std::uint32_t(hr), suppressed);
+                LOG_ERROR("CpuUpload: texture upload failed ({:#010x}, {} suppressed)", std::uint32_t(hr), suppressed);
         }
     }
 
@@ -61,7 +61,7 @@ namespace Meridian::Render
         auto& surface = type == PET_POPUP ? m_popupSurface : m_viewSurface;
         std::uint32_t suppressed = 0;
         if (!surface.Frames().Submit(buffer, width, height, std::span(dirty).first(count)) && m_paintErrors.ShouldLog(suppressed))
-            spdlog::warn("CpuUpload: rejected {}x{} paint ({} suppressed)", width, height, suppressed);
+            LOG_WARN("CpuUpload: rejected {}x{} paint ({} suppressed)", width, height, suppressed);
     }
 
     void CEFCpuRenderLayer::OnPopupShow(CefRefPtr<CefBrowser>, bool show)

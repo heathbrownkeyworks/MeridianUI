@@ -23,7 +23,7 @@ namespace Meridian::Hooks
             const auto callSite = CallSiteAddress();
             if (!IsExpectedCallSite(callSite, CallEncoding::Relative5))
             {
-                spdlog::error(
+                LOG_ERROR(
                     "{}: install refused at {:X}: expected E8 rel32 call for Skyrim {}",
                     NameOf(InputDispatchHook),
                     callSite,
@@ -35,12 +35,12 @@ namespace Meridian::Hooks
                 callSite,
                 &InputDispatchHook::PriorityDetour);
             s_priorityInstalled.store(true, std::memory_order_release);
-            spdlog::info("{}: priority layer installed at {:X}", NameOf(InputDispatchHook), callSite);
+            LOG_INFO("{}: priority layer installed at {:X}", NameOf(InputDispatchHook), callSite);
             return true;
         }
         catch (const std::exception& e)
         {
-            spdlog::error("{}: install FAILED ({}) — focused input ownership unavailable",
+            LOG_ERROR("{}: install FAILED ({}) — focused input ownership unavailable",
                           NameOf(InputDispatchHook),
                           e.what());
             return false;
@@ -52,7 +52,7 @@ namespace Meridian::Hooks
         const auto messaging = SKSE::GetMessagingInterface();
         if (messaging == nullptr)
         {
-            spdlog::error("{}: SKSE messaging unavailable; outer input guard cannot be scheduled",
+            LOG_ERROR("{}: SKSE messaging unavailable; outer input guard cannot be scheduled",
                           NameOf(InputDispatchHook));
             return false;
         }
@@ -67,7 +67,7 @@ namespace Meridian::Hooks
             });
         if (!registered)
         {
-            spdlog::error("{}: failed to register the post-plugin-load input guard",
+            LOG_ERROR("{}: failed to register the post-plugin-load input guard",
                           NameOf(InputDispatchHook));
         }
         return registered;
@@ -84,7 +84,7 @@ namespace Meridian::Hooks
         {
             if (!s_priorityInstalled.load(std::memory_order_acquire))
             {
-                spdlog::error("{}: outer install refused because the priority layer is unavailable",
+                LOG_ERROR("{}: outer install refused because the priority layer is unavailable",
                               NameOf(InputDispatchHook));
                 return false;
             }
@@ -92,7 +92,7 @@ namespace Meridian::Hooks
             const auto callSite = CallSiteAddress();
             if (!IsExpectedCallSite(callSite, CallEncoding::Relative5))
             {
-                spdlog::error(
+                LOG_ERROR(
                     "{}: outer install refused at {:X}: expected E8 rel32 call for Skyrim {}",
                     NameOf(InputDispatchHook),
                     callSite,
@@ -107,14 +107,14 @@ namespace Meridian::Hooks
                 callSite,
                 &InputDispatchHook::OutermostDetour);
             s_outerInstalled.store(true, std::memory_order_release);
-            spdlog::info("{}: outer focused-input guard installed at {:X} after SKSE plugin loading",
+            LOG_INFO("{}: outer focused-input guard installed at {:X} after SKSE plugin loading",
                          NameOf(InputDispatchHook),
                          callSite);
             return true;
         }
         catch (const std::exception& e)
         {
-            spdlog::error("{}: outer install FAILED ({}) — competing hooks may observe focused input",
+            LOG_ERROR("{}: outer install FAILED ({}) — competing hooks may observe focused input",
                           NameOf(InputDispatchHook),
                           e.what());
             return false;

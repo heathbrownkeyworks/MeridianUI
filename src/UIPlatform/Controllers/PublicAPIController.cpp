@@ -27,7 +27,7 @@ namespace Meridian::Controllers
             std::lock_guard platformInitLock(m_initPlatformServiceMutex);
             m_applicationThreadId = applicationThreadId;
         }
-        spdlog::info("{}: application thread designated as {}",
+        LOG_INFO("{}: application thread designated as {}",
                      NameOf(PublicAPIController),
                      std::hash<std::thread::id>{}(applicationThreadId));
 
@@ -51,7 +51,7 @@ namespace Meridian::Controllers
             if (a_msg->type == SKSE::MessagingInterface::kPostPostLoad &&
                 ::GetModuleHandleW(L"PrismaUI.dll") != nullptr)
             {
-                spdlog::info("{}: PrismaUI detected in-process — focus-scoped cursor arbitration active", NameOf(PublicAPIController));
+                LOG_INFO("{}: PrismaUI detected in-process — focus-scoped cursor arbitration active", NameOf(PublicAPIController));
             }
         });
 
@@ -65,7 +65,7 @@ namespace Meridian::Controllers
             switch (a_msg->type)
             {
             case Meridian::UI::APIMessageType::RequestVersion:
-                spdlog::info("{}: Request version data from \"{}\"", NameOf(PublicAPIController), a_msg->sender);
+                LOG_INFO("{}: Request version data from \"{}\"", NameOf(PublicAPIController), a_msg->sender);
                 SKSE::GetMessagingInterface()->Dispatch(Meridian::UI::APIMessageType::ResponseVersion,
                                                         static_cast<void*>(controller.GetVersionMessage()),
                                                         sizeof(*controller.GetVersionMessage()),
@@ -74,17 +74,17 @@ namespace Meridian::Controllers
             case Meridian::UI::APIMessageType::RequestAPI: {
                 if (a_msg->data == nullptr || a_msg->dataLen != sizeof(Meridian::UI::RequestAPIMessage))
                 {
-                    spdlog::error("{}: INVALID request api from \"{}\". No data.", NameOf(PublicAPIController), a_msg->sender);
+                    LOG_ERROR("{}: INVALID request api from \"{}\". No data.", NameOf(PublicAPIController), a_msg->sender);
                     return;
                 }
                 else
                 {
-                    spdlog::info("{}: Request api from \"{}\"", NameOf(PublicAPIController), a_msg->sender);
+                    LOG_INFO("{}: Request api from \"{}\"", NameOf(PublicAPIController), a_msg->sender);
                 }
 
                 if (!controller.InitIfNotPlatformService(static_cast<Meridian::UI::Settings*>(a_msg->data)))
                 {
-                    spdlog::error("{}: Can't response API because ui platform failed to init", NameOf(PublicAPIController));
+                    LOG_ERROR("{}: Can't response API because ui platform failed to init", NameOf(PublicAPIController));
                     break;
                 }
                 SKSE::GetMessagingInterface()->Dispatch(Meridian::UI::APIMessageType::ResponseAPI,
@@ -118,7 +118,7 @@ namespace Meridian::Controllers
             std::lock_guard platformInitLock(m_initPlatformServiceMutex);
         }
 
-        spdlog::info("{}: shutdown requested; rejecting new browser work", NameOf(PublicAPIController));
+        LOG_INFO("{}: shutdown requested; rejecting new browser work", NameOf(PublicAPIController));
 
         // Quiesce rendering and JS callback dispatch before consumer-owned state
         // is torn down by the callbacks below. Browser closure remains tracked
@@ -158,11 +158,11 @@ namespace Meridian::Controllers
             }
             catch (const std::exception& error)
             {
-                spdlog::error("{}: consumer shutdown callback failed: {}", NameOf(PublicAPIController), error.what());
+                LOG_ERROR("{}: consumer shutdown callback failed: {}", NameOf(PublicAPIController), error.what());
             }
             catch (...)
             {
-                spdlog::error("{}: consumer shutdown callback failed", NameOf(PublicAPIController));
+                LOG_ERROR("{}: consumer shutdown callback failed", NameOf(PublicAPIController));
             }
         }
 
@@ -183,7 +183,7 @@ namespace Meridian::Controllers
         std::lock_guard locker(m_initPlatformServiceMutex);
         if (m_isShuttingDown.load(std::memory_order_acquire))
         {
-            spdlog::warn("{}: refusing initialization during shutdown", NameOf(PublicAPIController));
+            LOG_WARN("{}: refusing initialization during shutdown", NameOf(PublicAPIController));
             return false;
         }
 
@@ -196,7 +196,7 @@ namespace Meridian::Controllers
         const auto currentThreadId = std::this_thread::get_id();
         if (m_applicationThreadId == std::thread::id{} || currentThreadId != m_applicationThreadId)
         {
-            spdlog::error("{}: refusing first CEF initialization on thread {}; application thread is {}",
+            LOG_ERROR("{}: refusing first CEF initialization on thread {}; application thread is {}",
                           NameOf(PublicAPIController),
                           std::hash<std::thread::id>{}(currentThreadId),
                           std::hash<std::thread::id>{}(m_applicationThreadId));
@@ -206,7 +206,7 @@ namespace Meridian::Controllers
         Meridian::UI::Settings ingested{};
         if (!Meridian::UI::IngestSettings(a_settings, Meridian::UI::kSettingsMinSize10, ingested))
         {
-            spdlog::error("PublicAPIController: caller Settings rejected — structSize below the 1.0 minimum (pre-1.0 layout or corrupt); refusing API");
+            LOG_ERROR("PublicAPIController: caller Settings rejected — structSize below the 1.0 minimum (pre-1.0 layout or corrupt); refusing API");
             return false;
         }
 
@@ -236,7 +236,7 @@ namespace Meridian::Controllers
             }
             if (!overriddenKeys.empty())
             {
-                spdlog::info("{}: MeridianUI.ini overrode: {}", NameOf(PublicAPIController), overriddenKeys);
+                LOG_INFO("{}: MeridianUI.ini overrode: {}", NameOf(PublicAPIController), overriddenKeys);
             }
         }
 
@@ -247,7 +247,7 @@ namespace Meridian::Controllers
             // Some plugins (like SkyrimSouls) can hook translate functions, we need to hook them after all plugins
             if (!Meridian::Hooks::CharGeneratorHook::Install())
             {
-                spdlog::warn("Native-menu language switching is unavailable on this Skyrim runtime");
+                LOG_WARN("Native-menu language switching is unavailable on this Skyrim runtime");
             }
         }
 
@@ -283,7 +283,7 @@ namespace Meridian::Controllers
             {
                 if (!m_isShuttingDown.load(std::memory_order_relaxed))
                 {
-                    spdlog::warn("{}: not found browser ref handle", NameOf(PublicAPIController));
+                    LOG_WARN("{}: not found browser ref handle", NameOf(PublicAPIController));
                 }
                 return;
             }
@@ -293,7 +293,7 @@ namespace Meridian::Controllers
             const auto browserIt = m_browserNameMap.find(browserName);
             if (browserIt == m_browserNameMap.cend())
             {
-                spdlog::warn("{}: not found browser pointer", NameOf(PublicAPIController));
+                LOG_WARN("{}: not found browser pointer", NameOf(PublicAPIController));
                 return;
             }
 
@@ -317,7 +317,7 @@ namespace Meridian::Controllers
         }
         else
         {
-            spdlog::error("{}: platform service is not initialized", NameOf(PublicAPIController));
+            LOG_ERROR("{}: platform service is not initialized", NameOf(PublicAPIController));
         }
 
         {
@@ -348,7 +348,7 @@ namespace Meridian::Controllers
             a_browserName, a_funcInfoArr, a_funcInfoArrSize, a_startUrl);
         if (validationError != PublicAPIValidation::Error::None)
         {
-            spdlog::error("{}: rejected browser request: {}",
+            LOG_ERROR("{}: rejected browser request: {}",
                           NameOf(PublicAPIController),
                           PublicAPIValidation::ToString(validationError));
             return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
@@ -365,7 +365,7 @@ namespace Meridian::Controllers
 
         if (!Meridian::Services::UIPlatformService::GetSingleton().IsInited())
         {
-            spdlog::error("{}: platform service is not initialized", NameOf(PublicAPIController));
+            LOG_ERROR("{}: platform service is not initialized", NameOf(PublicAPIController));
             a_outBrowser = nullptr;
             return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
         }
@@ -380,7 +380,7 @@ namespace Meridian::Controllers
         std::lock_guard lock(m_mapMutex);
         if (m_closingBrowserNames.contains(a_browserName))
         {
-            spdlog::warn("{}: browser \"{}\" is still closing", NameOf(PublicAPIController), a_browserName);
+            LOG_WARN("{}: browser \"{}\" is still closing", NameOf(PublicAPIController), a_browserName);
             a_outBrowser = nullptr;
             return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
         }
@@ -430,7 +430,7 @@ namespace Meridian::Controllers
             Meridian::UI::BrowserSettings ingestedBrowserSettings{};
             if (!Meridian::UI::IngestSettings(a_settings, Meridian::UI::kBrowserSettingsMinSize10, ingestedBrowserSettings))
             {
-                spdlog::error("{}: caller BrowserSettings rejected — structSize below the 1.0 minimum (pre-1.0 layout or corrupt); refusing browser creation", NameOf(PublicAPIController));
+                LOG_ERROR("{}: caller BrowserSettings rejected — structSize below the 1.0 minimum (pre-1.0 layout or corrupt); refusing browser creation", NameOf(PublicAPIController));
                 a_outBrowser = nullptr;
                 return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             }
@@ -438,13 +438,13 @@ namespace Meridian::Controllers
             auto newCefMenu = Meridian::Services::UIPlatformService::GetSingleton().CreateCefMenu(jsFuncStorage, a_eventFuncInfo, m_settingsProvider);
             if (!newCefMenu->LoadBrowser(a_startUrl, m_settingsProvider->GetCefWindowInfo(), m_settingsProvider->MergeAndGetCefBrowserSettings(&ingestedBrowserSettings)))
             {
-                spdlog::error("{}: failed to load browser ({}) with name \"{}\"", NameOf(PublicAPIController), a_startUrl, a_browserName);
+                LOG_ERROR("{}: failed to load browser ({}) with name \"{}\"", NameOf(PublicAPIController), a_startUrl, a_browserName);
                 a_outBrowser = nullptr;
                 return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             }
             if (!renderHost.AddSubMenu(a_browserName, newCefMenu))
             {
-                spdlog::error("{}: failed to add cef menu with name \"{}\"", NameOf(PublicAPIController), a_browserName);
+                LOG_ERROR("{}: failed to add cef menu with name \"{}\"", NameOf(PublicAPIController), a_browserName);
                 a_outBrowser = nullptr;
                 return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             }
@@ -454,7 +454,7 @@ namespace Meridian::Controllers
         {
             if (cefMenu->GetMenuType() != Meridian::Menus::SubMenuType::CEFMenu)
             {
-                spdlog::error("{}: trying to get not a browser menu", NameOf(PublicAPIController));
+                LOG_ERROR("{}: trying to get not a browser menu", NameOf(PublicAPIController));
                 a_outBrowser = nullptr;
                 return Meridian::UI::IUIPlatformAPI::InvalidBrowserRefHandle;
             }

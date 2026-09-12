@@ -20,7 +20,15 @@ if(BUILD_AS_SHARED AND MERIDIAN_BUILD_FIXTURE)
         FILES ${UIPlatformTestName_src}
     )
 
-    add_library(${UIPlatformTestName} SHARED ${UIPlatformTestName_src})
+    add_commonlibsse_plugin(
+        ${UIPlatformTestName}
+        SOURCES ${UIPlatformTestName_src}
+        VERSION ${LIB_VERSION}
+        AUTHOR "ColdSun"
+        EMAIL ""
+        USE_ADDRESS_LIBRARY
+        MINIMUM_SKSE_VERSION "2.0.1.04"
+    )
     set_target_properties(
         ${UIPlatformTestName}
         PROPERTIES
@@ -32,8 +40,6 @@ if(BUILD_AS_SHARED AND MERIDIAN_BUILD_FIXTURE)
             LIBRARY_OUTPUT_DIRECTORY_RELEASE ${SKSE_PLUGIN_PATH}
             LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${SKSE_PLUGIN_PATH}
             LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${SKSE_PLUGIN_PATH}
-            #ARCHIVE_OUTPUT_DIRECTORY ${SKSE_PLUGIN_PATH}/archive
-            #PDB_OUTPUT_DIRECTORY ${SKSE_PLUGIN_PATH}
     )
 
     target_include_directories(
@@ -51,12 +57,6 @@ if(BUILD_AS_SHARED AND MERIDIAN_BUILD_FIXTURE)
         ${UIPlatformTestName}
         PRIVATE
             "src/UIPlatformTest/PCH.h"
-    )
-
-    target_link_libraries(
-        ${UIPlatformTestName}
-        PUBLIC
-            CommonLibSSE::CommonLibSSE
     )
 
     add_custom_command(

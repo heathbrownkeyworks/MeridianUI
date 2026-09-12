@@ -2,21 +2,17 @@
 
 namespace Meridian::Menus
 {
-    CEFMenu::CEFMenu(std::shared_ptr<spdlog::logger> a_logger,
-                     std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
+    CEFMenu::CEFMenu(std::shared_ptr<Meridian::JS::JSFunctionStorage> a_jsFuncStorage,
                      Meridian::JS::JSEventFuncInfo& a_eventFuncInfo,
                      std::shared_ptr<Meridian::Providers::ICEFSettingsProvider> a_settingsProvider)
     {
-        ThrowIfNullptr(CEFMenu, a_logger);
-        m_logger = a_logger;
-
         m_jsFuncStorage = a_jsFuncStorage == nullptr ? std::make_shared<Meridian::JS::JSFunctionStorage>() : a_jsFuncStorage;
         m_eventFuncInfo = a_eventFuncInfo;
 
         m_geometryHolder = std::make_shared<Meridian::Menus::LayerGeometryHolder>();
 
         const auto cefClient = CefRefPtr<Meridian::CEF::MeridianCefClient>(new Meridian::CEF::MeridianCefClient(a_settingsProvider, m_geometryHolder));
-        m_browser = std::make_shared<Meridian::CEF::DefaultBrowser>(m_logger, cefClient, m_jsFuncStorage, m_geometryHolder);
+        m_browser = std::make_shared<Meridian::CEF::DefaultBrowser>(cefClient, m_jsFuncStorage, m_geometryHolder);
         m_cefRenderLayer = m_browser->GetCefClient()->GetRenderLayer();
     }
 
@@ -46,7 +42,7 @@ namespace Meridian::Menus
             }
             if (!m_browser->GetCefClient()->AllowInitialNavigation(a_url))
             {
-                m_logger->error("{}: refused native-bound browser start URL \"{}\"", NameOf(CEFMenu), a_url);
+                LOG_ERROR("{}: refused native-bound browser start URL \"{}\"", NameOf(CEFMenu), a_url);
                 return false;
             }
 
@@ -65,7 +61,7 @@ namespace Meridian::Menus
                                                         a_cefBrowserSettings);
             if (!createBrowserResult)
             {
-                m_logger->error("{}: failed to create browser", NameOf(CEFMenu));
+                LOG_ERROR("{}: failed to create browser", NameOf(CEFMenu));
                 return false;
             }
 

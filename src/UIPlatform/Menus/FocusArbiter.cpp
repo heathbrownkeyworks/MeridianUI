@@ -17,7 +17,7 @@ namespace Meridian::Menus
         const auto taskInterface = SKSE::GetTaskInterface();
         if (taskInterface == nullptr)
         {
-            spdlog::warn("FocusArbiter: could not queue text-input transition without the SKSE task interface");
+            LOG_WARN("FocusArbiter: could not queue text-input transition without the SKSE task interface");
             return;
         }
 
@@ -25,7 +25,7 @@ namespace Meridian::Menus
             const auto controlMap = RE::ControlMap::GetSingleton();
             if (controlMap == nullptr)
             {
-                spdlog::warn("FocusArbiter: could not apply text-input transition without ControlMap");
+                LOG_WARN("FocusArbiter: could not apply text-input transition without ControlMap");
                 return;
             }
 
@@ -41,12 +41,12 @@ namespace Meridian::Menus
                 // Do not remember a lease that cannot be acquired,
                 // or a later blur would incorrectly decrement the sentinel.
                 m_textInputLeaseState.RejectAcquire();
-                spdlog::warn("FocusArbiter: engine rejected Meridian text-input lease (ControlMap count=-1)");
+                LOG_WARN("FocusArbiter: engine rejected Meridian text-input lease (ControlMap count=-1)");
                 return;
             }
             controlMap->AllowTextInput(acquire);
             const auto count = controlMap->GetRuntimeData().textEntryCount;
-            spdlog::debug("FocusArbiter: {} Meridian text-input lease (ControlMap count={})",
+            LOG_DEBUG("FocusArbiter: {} Meridian text-input lease (ControlMap count={})",
                           acquire ? "acquired" : "released",
                           count);
         });
@@ -65,7 +65,7 @@ namespace Meridian::Menus
         const auto generation = m_sessionState.Begin(running, keyboardState, keyboardStateSize);
         if (running.has_value())
         {
-            spdlog::debug("FocusArbiter: captured player running={} for focus generation {}",
+            LOG_DEBUG("FocusArbiter: captured player running={} for focus generation {}",
                           *running,
                           generation);
         }
@@ -201,7 +201,7 @@ namespace Meridian::Menus
             if (auto* playerControls = RE::PlayerControls::GetSingleton())
             {
                 playerControls->data.running = *ticket.running;
-                spdlog::debug("FocusArbiter: restored player running={} after focus generation {} closed",
+                LOG_DEBUG("FocusArbiter: restored player running={} after focus generation {} closed",
                               *ticket.running,
                               ticket.generation);
             }

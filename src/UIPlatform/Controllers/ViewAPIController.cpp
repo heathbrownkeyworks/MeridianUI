@@ -51,7 +51,7 @@ namespace Meridian::Controllers
         const auto parsedUrl = Meridian::Scheme::ParseModUrl(a_info->startUrl);
         if (!parsedUrl.has_value() || ToLower(parsedUrl->modName) != ToLower(a_info->ownerName))
         {
-            spdlog::error("{}: refusing view whose mod:// host does not match owner '{}'", NameOf(ViewAPIController), a_info->ownerName);
+            LOG_ERROR("{}: refusing view whose mod:// host does not match owner '{}'", NameOf(ViewAPIController), a_info->ownerName);
             return INVALID_VIEW_HANDLE;
         }
 
@@ -60,7 +60,7 @@ namespace Meridian::Controllers
             std::lock_guard lock(m_mutex);
             if (m_ownedBrowserNames.contains(browserName))
             {
-                spdlog::warn("{}: duplicate view name '{}'", NameOf(ViewAPIController), browserName);
+                LOG_WARN("{}: duplicate view name '{}'", NameOf(ViewAPIController), browserName);
                 return INVALID_VIEW_HANDLE;
             }
             m_ownedBrowserNames.insert(browserName);
@@ -132,7 +132,7 @@ namespace Meridian::Controllers
         const auto bootstrap = ViewBridgeScripts::BuildBootstrap(token);
         browser->AddPersistentJavaScript("00-bootstrap", bootstrap.c_str());
 
-        spdlog::info("{}: created {} as handle {}", NameOf(ViewAPIController), browserName, viewHandle);
+        LOG_INFO("{}: created {} as handle {}", NameOf(ViewAPIController), browserName, viewHandle);
         return viewHandle;
     }
 
@@ -385,11 +385,11 @@ namespace Meridian::Controllers
         }
         catch (const std::exception& error)
         {
-            spdlog::error("{}: consumer callback failed: {}", NameOf(ViewAPIController), error.what());
+            LOG_ERROR("{}: consumer callback failed: {}", NameOf(ViewAPIController), error.what());
         }
         catch (...)
         {
-            spdlog::error("{}: consumer callback failed", NameOf(ViewAPIController));
+            LOG_ERROR("{}: consumer callback failed", NameOf(ViewAPIController));
         }
         s_inDispatch = previousDispatchState;
     }
@@ -431,7 +431,7 @@ namespace Meridian::Controllers
                             static_cast<ULONG>(bytes.size()),
                             BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0)
         {
-            spdlog::error("{}: BCryptGenRandom failed", NameOf(ViewAPIController));
+            LOG_ERROR("{}: BCryptGenRandom failed", NameOf(ViewAPIController));
             return {};
         }
 

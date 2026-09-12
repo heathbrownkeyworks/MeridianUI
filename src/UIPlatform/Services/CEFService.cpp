@@ -72,7 +72,7 @@ namespace Meridian::Services
 
         if (notify)
         {
-            spdlog::info("CEFService: all browser close callbacks have drained");
+            LOG_INFO("CEFService: all browser close callbacks have drained");
             s_lifecycleCondition.notify_all();
         }
     }
@@ -85,7 +85,7 @@ namespace Meridian::Services
             s_lifecycleState = LifecycleState::Failed;
         }
 
-        spdlog::error("CEFService: failed to post browser-close drain barrier to CEF UI thread");
+        LOG_ERROR("CEFService: failed to post browser-close drain barrier to CEF UI thread");
         s_lifecycleCondition.notify_all();
     }
 
@@ -134,14 +134,14 @@ namespace Meridian::Services
 
         if (CefRegisterSchemeHandlerFactory("mod", "", new Meridian::Scheme::ModSchemeHandlerFactory()))
         {
-            spdlog::info("CEFService::CEFInitialize registered the mod:// scheme handler factory");
+            LOG_INFO("CEFService::CEFInitialize registered the mod:// scheme handler factory");
         }
         else
         {
-            spdlog::error("CEFService::CEFInitialize failed to register the mod:// scheme handler factory");
+            LOG_ERROR("CEFService::CEFInitialize failed to register the mod:// scheme handler factory");
         }
 
-        spdlog::info("CEFService::CEFInitialize successfully on application thread {}",
+        LOG_INFO("CEFService::CEFInitialize successfully on application thread {}",
                      std::hash<std::thread::id>{}(s_initializeThreadId));
     }
 
@@ -157,14 +157,14 @@ namespace Meridian::Services
 
             if (std::this_thread::get_id() != s_initializeThreadId)
             {
-                spdlog::error("CEFService: browser shutdown requested from a thread other than the CEF initialization thread");
+                LOG_ERROR("CEFService: browser shutdown requested from a thread other than the CEF initialization thread");
                 return false;
             }
         }
 
         if (CefCurrentlyOn(TID_UI))
         {
-            spdlog::error("CEFService: refusing to wait for browser closure on CEF UI thread");
+            LOG_ERROR("CEFService: refusing to wait for browser closure on CEF UI thread");
             return false;
         }
 
@@ -205,7 +205,7 @@ namespace Meridian::Services
             postDrainBarrier = ArmDrainBarrierIfNeededLocked();
         }
 
-        spdlog::info("CEFService: shutdown requested on application thread {} ({} active, {} pending)",
+        LOG_INFO("CEFService: shutdown requested on application thread {} ({} active, {} pending)",
                      std::hash<std::thread::id>{}(std::this_thread::get_id()),
                      activeBrowserCount,
                      pendingBrowserCount);
@@ -242,7 +242,7 @@ namespace Meridian::Services
                 pendingCount += state.creationPending ? 1 : 0;
             }
 
-            spdlog::error("CEFService: timed out waiting for browser shutdown ({} live, {} pending)", browserCount, pendingCount);
+            LOG_ERROR("CEFService: timed out waiting for browser shutdown ({} live, {} pending)", browserCount, pendingCount);
             return false;
         }
 
@@ -278,7 +278,7 @@ namespace Meridian::Services
             s_lifecycleState = LifecycleState::ShuttingDown;
         }
 
-        spdlog::info("CEFService: entering CefShutdown on application thread {}",
+        LOG_INFO("CEFService: entering CefShutdown on application thread {}",
                      std::hash<std::thread::id>{}(std::this_thread::get_id()));
         ::CefShutdown();
 
@@ -291,7 +291,7 @@ namespace Meridian::Services
             s_lifecycleState = LifecycleState::Stopped;
         }
         s_lifecycleCondition.notify_all();
-        spdlog::info("CEFService::CEFShutdown successfully");
+        LOG_INFO("CEFService::CEFShutdown successfully");
     }
 
     bool CEFService::CreateBrowser(const CefRefPtr<CefClient> a_client,
@@ -302,7 +302,7 @@ namespace Meridian::Services
     {
         if (a_client == nullptr)
         {
-            spdlog::error("CEFService::CreateBrowser: client is nullptr");
+            LOG_ERROR("CEFService::CreateBrowser: client is nullptr");
             return false;
         }
 
@@ -311,14 +311,14 @@ namespace Meridian::Services
             std::lock_guard lock(s_lifecycleMutex);
             if (s_lifecycleState != LifecycleState::Running)
             {
-                spdlog::warn("CEFService::CreateBrowser: rejected because CEF is not running");
+                LOG_WARN("CEFService::CreateBrowser: rejected because CEF is not running");
                 return false;
             }
 
             auto& state = s_clients[clientKey];
             if (state.creationPending || state.closeRequested || !state.browsers.empty())
             {
-                spdlog::error("CEFService::CreateBrowser: client already owns or is creating a browser");
+                LOG_ERROR("CEFService::CreateBrowser: client already owns or is creating a browser");
                 return false;
             }
 
@@ -417,7 +417,7 @@ namespace Meridian::Services
             }
         }
 
-        spdlog::info("CEFService: browser {} registered", a_browser->GetIdentifier());
+        LOG_INFO("CEFService: browser {} registered", a_browser->GetIdentifier());
         return disposition;
     }
 
@@ -445,7 +445,7 @@ namespace Meridian::Services
             postDrainBarrier = ArmDrainBarrierIfNeededLocked();
         }
 
-        spdlog::info("CEFService: browser {} reached OnBeforeClose", browserId);
+        LOG_INFO("CEFService: browser {} reached OnBeforeClose", browserId);
         if (postDrainBarrier)
         {
             // This task cannot run until the current OnBeforeClose callback has

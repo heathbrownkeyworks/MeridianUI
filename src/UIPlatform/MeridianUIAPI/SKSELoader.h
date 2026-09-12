@@ -49,7 +49,7 @@ namespace Meridian::UI::SKSELoader
             {
             case Meridian::UI::APIMessageType::ResponseVersion: {
                 const auto versionInfo = reinterpret_cast<Meridian::UI::ResponseVersionMessage*>(a_msg->data);
-                spdlog::info("MeridianUI loader: installed version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(versionInfo->libVersion), Meridian::UI::LibVersion::GetMinorVersion(versionInfo->libVersion));
+                LOG_INFO("MeridianUI loader: installed version: {}.{}", Meridian::UI::LibVersion::GetMajorVersion(versionInfo->libVersion), Meridian::UI::LibVersion::GetMinorVersion(versionInfo->libVersion));
 
                 const auto majorAPIVersion = Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion);
                 const auto minorAPIVersion = Meridian::UI::APIVersion::GetMinorVersion(versionInfo->apiVersion);
@@ -57,7 +57,7 @@ namespace Meridian::UI::SKSELoader
                 if (majorAPIVersion != Meridian::UI::APIVersion::MAJOR || minorAPIVersion < Meridian::UI::APIVersion::MINOR)
                 {
                     LoaderData::s_canUseAPI = false;
-                    spdlog::error("MeridianUI loader: can't use this API version. We have {}.{}, but {}.{} is installed",
+                    LOG_ERROR("MeridianUI loader: can't use this API version. We have {}.{}, but {}.{} is installed",
                                   Meridian::UI::APIVersion::MAJOR,
                                   Meridian::UI::APIVersion::MINOR,
                                   Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
@@ -66,7 +66,7 @@ namespace Meridian::UI::SKSELoader
                 else
                 {
                     LoaderData::s_canUseAPI = true;
-                    spdlog::info("MeridianUI loader: API version is ok. Our version {}.{}, installed {}.{}",
+                    LOG_INFO("MeridianUI loader: API version is ok. Our version {}.{}, installed {}.{}",
                                  Meridian::UI::APIVersion::MAJOR,
                                  Meridian::UI::APIVersion::MINOR,
                                  Meridian::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
@@ -78,7 +78,7 @@ namespace Meridian::UI::SKSELoader
                 auto api = reinterpret_cast<Meridian::UI::ResponseAPIMessage*>(a_msg->data)->API;
                 if (api == nullptr)
                 {
-                    spdlog::error("API is nullptr");
+                    LOG_ERROR("API is nullptr");
                     break;
                 }
 

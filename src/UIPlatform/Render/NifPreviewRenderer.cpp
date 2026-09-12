@@ -335,7 +335,7 @@ namespace Meridian::Render::NifPreview
                                                  std::string_view a_endpoint,
                                                  std::string_view a_path,
                                                  const ExtractionResult& a_result) {
-                spdlog::warn(
+                LOG_WARN(
                     "{}: scene object {} endpoint {} path '{}' extraction status {}, accepted {} shapes, skipped {}, matched {} texture overrides, matched {} actor tint overrides, reconstructed {} external bones, decoded {} dynamic shapes, vertices {}, indices {}, first failed shape '{}'",
                     NameOf(NifPreviewRenderer),
                     a_scene.object,
@@ -392,7 +392,7 @@ namespace Meridian::Render::NifPreview
                                    (a_draw.material.faceTintTexturePath.empty() ||
                                     a_draw.material.faceDetailTexturePath.empty());
                         });
-                    spdlog::info(
+                    LOG_INFO(
                         "{}: live actor {:08X} accepted {} live shapes ({} skipped) from {} selected roots; FaceGen {}, RGB tint {}, hair tint {}, model-space normals {}, incomplete FaceGen texture sets {}",
                         NameOf(NifPreviewRenderer),
                         scene.liveActorFormID,
@@ -424,7 +424,7 @@ namespace Meridian::Render::NifPreview
                 if (!scene.textureOverrides.empty() &&
                     extracted.matchedTextureOverrides == 0)
                 {
-                    spdlog::warn(
+                    LOG_WARN(
                         "{}: scene object {} low endpoint '{}' matched none of its {} alternate textures",
                         NameOf(NifPreviewRenderer),
                         scene.object,
@@ -455,7 +455,7 @@ namespace Meridian::Render::NifPreview
                     if (!scene.textureOverrides.empty() &&
                         high.matchedTextureOverrides == 0)
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: scene object {} high endpoint '{}' matched none of its {} alternate textures",
                             NameOf(NifPreviewRenderer),
                             scene.object,
@@ -472,7 +472,7 @@ namespace Meridian::Render::NifPreview
                         extracted.mesh, high.mesh, scene.weight);
                     if (!weighted)
                     {
-                        spdlog::warn(
+                        LOG_WARN(
                             "{}: scene object {} weight interpolation failed between low path '{}' and high path '{}' with status {}, topology {} at {}",
                             NameOf(NifPreviewRenderer),
                             scene.object,
@@ -523,7 +523,7 @@ namespace Meridian::Render::NifPreview
                     FrameModel();
                 }
                 m_cameraDirty.store(true, std::memory_order_release);
-                spdlog::info("{}: composed {} objects, extracted {} shapes ({} skipped), matched {} texture overrides, matched {} actor tint overrides, reconstructed {} external bones, decoded {} dynamic shapes, {} indices uploaded",
+                LOG_INFO("{}: composed {} objects, extracted {} shapes ({} skipped), matched {} texture overrides, matched {} actor tint overrides, reconstructed {} external bones, decoded {} dynamic shapes, {} indices uploaded",
                              NameOf(NifPreviewRenderer),
                              m_sceneVisibility.size(),
                              acceptedShapes,
@@ -544,7 +544,7 @@ namespace Meridian::Render::NifPreview
                     Meridian::UI::NifView::Status::Unsupported :
                     Meridian::UI::NifView::Status::Failed;
                 m_status.store(status, std::memory_order_release);
-                spdlog::warn("{}: scene composition failed with extraction status {}, weight status {}, weight topology {} at {}, composition status {} ({} shapes skipped)",
+                LOG_WARN("{}: scene composition failed with extraction status {}, weight status {}, weight topology {} at {}, composition status {} ({} shapes skipped)",
                              NameOf(NifPreviewRenderer),
                              static_cast<int>(failure),
                              static_cast<int>(weightFailure),
@@ -626,7 +626,7 @@ namespace Meridian::Render::NifPreview
         if (platformDevice == nullptr || !platformDevice->IsValid() ||
             a_renderData.device == nullptr || a_width == 0 || a_height == 0)
         {
-            spdlog::error("{}: private render device unavailable", NameOf(NifPreviewRenderer));
+            LOG_ERROR("{}: private render device unavailable", NameOf(NifPreviewRenderer));
             return false;
         }
 
@@ -640,7 +640,7 @@ namespace Meridian::Render::NifPreview
                 FAILED(platformDevice->Device()->CreatePixelShader(
                     g_NifMaterialPS, sizeof(g_NifMaterialPS), nullptr, pixelShader.GetAddressOf())))
             {
-                spdlog::error("{}: private-device material shader creation failed",
+                LOG_ERROR("{}: private-device material shader creation failed",
                               NameOf(NifPreviewRenderer));
                 return false;
             }
@@ -659,7 +659,7 @@ namespace Meridian::Render::NifPreview
                     sizeof(g_NifMaterialVS),
                     inputLayout.GetAddressOf())))
             {
-                spdlog::error("{}: private-device input layout creation failed", NameOf(NifPreviewRenderer));
+                LOG_ERROR("{}: private-device input layout creation failed", NameOf(NifPreviewRenderer));
                 return false;
             }
 
@@ -689,7 +689,7 @@ namespace Meridian::Render::NifPreview
             if (!createFallbackTexture(0xFFFFFFFFu, fallbackWhiteTexture) ||
                 !createFallbackTexture(0xFFFF8080u, fallbackNormalTexture))
             {
-                spdlog::error("{}: private-device fallback material textures failed",
+                LOG_ERROR("{}: private-device fallback material textures failed",
                               NameOf(NifPreviewRenderer));
                 return false;
             }
@@ -708,7 +708,7 @@ namespace Meridian::Render::NifPreview
             if (!createConstantBuffer(sizeof(SceneConstants), sceneConstantBuffer) ||
                 !createConstantBuffer(sizeof(MaterialConstants), materialConstantBuffer))
             {
-                spdlog::error("{}: private-device material constant buffers failed",
+                LOG_ERROR("{}: private-device material constant buffers failed",
                               NameOf(NifPreviewRenderer));
                 return false;
             }
@@ -716,7 +716,7 @@ namespace Meridian::Render::NifPreview
             if (!platformDevice->IsDeferred() &&
                 !m_transport.Initialize(*platformDevice, a_renderData.device, static_cast<int>(a_width), static_cast<int>(a_height)))
             {
-                spdlog::error("{}: cross-device frame transport initialization failed", NameOf(NifPreviewRenderer));
+                LOG_ERROR("{}: cross-device frame transport initialization failed", NameOf(NifPreviewRenderer));
                 return false;
             }
 
@@ -733,7 +733,7 @@ namespace Meridian::Render::NifPreview
         }
         catch (const std::exception& error)
         {
-            spdlog::error("{}: DirectXTK initialization failed: {}", NameOf(NifPreviewRenderer), error.what());
+            LOG_ERROR("{}: DirectXTK initialization failed: {}", NameOf(NifPreviewRenderer), error.what());
             return false;
         }
         return true;
@@ -753,7 +753,7 @@ namespace Meridian::Render::NifPreview
         std::string normalizedPath;
         if (!NormalizeTextureResourcePath(a_path, normalizedPath))
         {
-            spdlog::warn("{}: rejected material texture path '{}'",
+            LOG_WARN("{}: rejected material texture path '{}'",
                          NameOf(NifPreviewRenderer),
                          a_path);
             return nullptr;
@@ -787,7 +787,7 @@ namespace Meridian::Render::NifPreview
                 &ddsAlpha);
             if (FAILED(hr))
             {
-                spdlog::warn("{}: DDS decode failed for '{}' (HRESULT 0x{:08X})",
+                LOG_WARN("{}: DDS decode failed for '{}' (HRESULT 0x{:08X})",
                              NameOf(NifPreviewRenderer),
                              normalizedPath,
                              static_cast<unsigned>(hr));
@@ -796,7 +796,7 @@ namespace Meridian::Render::NifPreview
         }
         else
         {
-            spdlog::warn("{}: texture resource '{}' could not be read (status {})",
+            LOG_WARN("{}: texture resource '{}' could not be read (status {})",
                          NameOf(NifPreviewRenderer),
                          normalizedPath,
                          static_cast<int>(resource.error));
@@ -814,7 +814,7 @@ namespace Meridian::Render::NifPreview
                 desc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
             if ((a_requireCube && !isCube) || (!a_requireCube && !isTwoDimensional))
             {
-                spdlog::warn("{}: texture '{}' has incompatible DDS resource dimension {}",
+                LOG_WARN("{}: texture '{}' has incompatible DDS resource dimension {}",
                              NameOf(NifPreviewRenderer),
                              normalizedPath,
                              static_cast<unsigned>(desc.ViewDimension));
@@ -1205,7 +1205,7 @@ namespace Meridian::Render::NifPreview
                 if (m_isShuttingDown.load(std::memory_order_acquire)) return false;
                 const auto hr = m_platformDevice->SubmitDeferredFrame();
                 if (FAILED(hr))
-                    spdlog::error("NifPreviewRenderer: deferred frame submission failed ({:#010x})", std::uint32_t(hr));
+                    LOG_ERROR("NifPreviewRenderer: deferred frame submission failed ({:#010x})", std::uint32_t(hr));
                 return SUCCEEDED(hr);
             }
         }

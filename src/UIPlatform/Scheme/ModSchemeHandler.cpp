@@ -33,7 +33,7 @@ namespace Meridian::Scheme
             std::uint32_t suppressed = 0;
             if (s_notFoundThrottle.ShouldLog(suppressed))
             {
-                spdlog::warn("ModSchemeHandler: 404 for \"{}\" ({} more suppressed in the last window)", a_url, suppressed);
+                LOG_WARN("ModSchemeHandler: 404 for \"{}\" ({} more suppressed in the last window)", a_url, suppressed);
             }
         }
     }

@@ -54,7 +54,7 @@ inline void CheckHresultThrow(HRESULT hr, const std::string& userMsg)
     {                                                                  \
         if (auto msg = CheckHresultMessage(hr, userMsg); !msg.empty()) \
         {                                                              \
-            spdlog::error("{}", msg);                                  \
+            LOG_ERROR("{}", msg);                                  \
             return;                                                    \
         }                                                              \
     } while (0)
@@ -64,7 +64,7 @@ inline void CheckHresultThrow(HRESULT hr, const std::string& userMsg)
     {                                                              \
         if (FAILED(hr))                                            \
         {                                                          \
-            spdlog::error("{}", CheckHresultMessage(hr, userMsg)); \
+            LOG_ERROR("{}", CheckHresultMessage(hr, userMsg)); \
             return;                                                \
         }                                                          \
     } while (0)

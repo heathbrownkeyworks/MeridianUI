@@ -561,8 +561,8 @@ namespace Meridian::Render::NifPreview
             {
                 return ShapeResult::Unsupported;
             }
-            if (boneCount > MAX_SKIN_BONES || skinData->boneData == nullptr ||
-                a_skinInstance->bones == nullptr)
+            const auto* boneData = skinData->GetBoneData();
+            if (boneCount > MAX_SKIN_BONES || a_skinInstance->bones == nullptr || boneData == nullptr)
             {
                 return ShapeResult::Malformed;
             }

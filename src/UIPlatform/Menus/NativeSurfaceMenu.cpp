@@ -44,7 +44,7 @@ namespace Meridian::Menus
             TEXTURE_SIZE, TEXTURE_SIZE, TILE_SIZE, DARK_TILE, LIGHT_TILE);
         if (pixels.empty() || a_renderData->device == nullptr)
         {
-            spdlog::error("{}: cannot create checkerboard texture", NameOf(NativeSurfaceMenu));
+            LOG_ERROR("{}: cannot create checkerboard texture", NameOf(NativeSurfaceMenu));
             return;
         }
 
@@ -66,7 +66,7 @@ namespace Meridian::Menus
         auto result = a_renderData->device->CreateTexture2D(&textureDesc, &initialData, texture.GetAddressOf());
         if (FAILED(result))
         {
-            spdlog::error("{}: CreateTexture2D failed (0x{:08X})",
+            LOG_ERROR("{}: CreateTexture2D failed (0x{:08X})",
                           NameOf(NativeSurfaceMenu), static_cast<std::uint32_t>(result));
             return;
         }
@@ -76,7 +76,7 @@ namespace Meridian::Menus
             texture.Get(), nullptr, shaderResourceView.GetAddressOf());
         if (FAILED(result))
         {
-            spdlog::error("{}: CreateShaderResourceView failed (0x{:08X})",
+            LOG_ERROR("{}: CreateShaderResourceView failed (0x{:08X})",
                           NameOf(NativeSurfaceMenu), static_cast<std::uint32_t>(result));
             return;
         }

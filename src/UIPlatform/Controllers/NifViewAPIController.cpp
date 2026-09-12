@@ -27,7 +27,7 @@ namespace Meridian::Controllers
         std::string modelPath;
         if (!NormalizeNifModelPath(a_info->modelPath, modelPath))
         {
-            spdlog::warn("{}: rejected unsafe or invalid NIF path", NameOf(NifViewAPIController));
+            LOG_WARN("{}: rejected unsafe or invalid NIF path", NameOf(NifViewAPIController));
             return false;
         }
 
@@ -49,7 +49,7 @@ namespace Meridian::Controllers
             return false;
         }
 
-        spdlog::info("{}: queued '{}' for surface {}",
+        LOG_INFO("{}: queued '{}' for surface {}",
                      NameOf(NifViewAPIController), modelPath, a_info->surface);
 
         taskInterface->AddTask([weakSurface,
@@ -70,7 +70,7 @@ namespace Meridian::Controllers
                 const auto error = RE::BSModelDB::Demand(modelPath.c_str(), scene, arguments);
                 if (error != RE::BSResource::ErrorCode::kNone || scene == nullptr)
                 {
-                    spdlog::warn("{}: BSModelDB could not load '{}' (error {})",
+                    LOG_WARN("{}: BSModelDB could not load '{}' (error {})",
                                  NameOf(NifViewAPIController),
                                  modelPath,
                                  static_cast<std::int32_t>(error));
@@ -85,13 +85,13 @@ namespace Meridian::Controllers
             }
             catch (const std::exception& error)
             {
-                spdlog::error("{}: exception loading '{}': {}",
+                LOG_ERROR("{}: exception loading '{}': {}",
                               NameOf(NifViewAPIController), modelPath, error.what());
                 target->FailNifLoad(generation, Status::Failed);
             }
             catch (...)
             {
-                spdlog::error("{}: unknown exception loading '{}'",
+                LOG_ERROR("{}: unknown exception loading '{}'",
                               NameOf(NifViewAPIController), modelPath);
                 target->FailNifLoad(generation, Status::Failed);
             }
