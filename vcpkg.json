@@ -7,7 +7,7 @@
   "dependencies": [
     "cef-prebuilt",
     "directxtk",
-    "directx-dxc",
+    "directxmath",
     "palsigslot",
     "fmt",
     "commonlibsse-ng",
